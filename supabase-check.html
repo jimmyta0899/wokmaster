@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wokmaster · Supabase 连通性与数据契约自检</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --line:#e3e6ea; --txt:#1f2329; --sub:#6b7280;
+    --pass:#16a34a; --pass-bg:#f0fdf4; --fail:#dc2626; --fail-bg:#fef2f2;
+    --warn:#d97706; --warn-bg:#fffbeb; --info:#2563eb; --info-bg:#eff6ff;
+    --accent:#b45309;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.6 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:24px 16px 64px}
+  header h1{font-size:20px;margin:0 0 6px}
+  header p{margin:0 0 16px;color:var(--sub);font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+  .cfg label{display:block;font-size:12px;color:var(--sub);margin:8px 0 4px}
+  .cfg input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font:13px/1.4 ui-monospace,Consolas,monospace}
+  .btns{margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  button{padding:8px 18px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-size:14px;cursor:pointer}
+  button:disabled{background:#cbd5e1;cursor:not-allowed}
+  button.ghost{background:#fff;color:var(--txt);border:1px solid var(--line)}
+  #summary{font-size:13px;color:var(--sub)}
+  table{width:100%;border-collapse:collapse;background:var(--card)}
+  th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:13px}
+  th{font-size:12px;color:var(--sub);font-weight:600;background:#fafafa}
+  td.id{white-space:nowrap;font-family:ui-monospace,Consolas,monospace;color:var(--sub);width:44px}
+  td.st{width:86px;white-space:nowrap;font-weight:600}
+  .st.pass{color:var(--pass)} .st.fail{color:var(--fail)} .st.warn{color:var(--warn)} .st.info{color:var(--info)} .st.run{color:var(--sub)}
+  tr.r-pass td{background:var(--pass-bg)} tr.r-fail td{background:var(--fail-bg)}
+  tr.r-warn td{background:var(--warn-bg)} tr.r-info td{background:var(--info-bg)}
+  td .det{color:var(--sub);font-size:12px;margin-top:2px;word-break:break-all}
+  details{margin-top:12px}
+  details summary{cursor:pointer;font-size:13px;color:var(--sub);user-select:none}
+  pre{background:#0f172a;color:#e2e8f0;padding:12px;border-radius:8px;overflow:auto;font-size:12px;max-height:420px}
+  .cols{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+  .cols div{flex:1;min-width:260px}
+  .cols h4{margin:6px 0;font-size:13px}
+  .cols code{display:inline-block;background:#f1f5f9;border-radius:4px;padding:1px 6px;margin:2px;font-size:12px}
+  .cols code.bad{background:#fee2e2;color:#991b1b}
+  .cols code.new{background:#dbeafe;color:#1e40af}
+  .env{font-size:12px;color:var(--sub);margin-bottom:14px;word-break:break-all}
+</style>
+</head>
+<div class="wrap">
+<header>
+  <h1>Wokmaster · Supabase 连通性与数据契约自检</h1>
+  <p>本页在你的浏览器里直连 Supabase（PostgREST <code>/rest/v1</code>）。anon key 是 publishable 公开密钥，可安全暴露。所有检查均为只读；唯一写操作是匿名调用 <code>cook_recipe</code> RPC，预期被 RLS 拒绝。结果页底部可一键复制，贴回给助手即可。</p>
+</header>
+
+<div class="env" id="env"></div>
+
+<div class="card cfg">
+  <label>SUPABASE_URL</label>
+  <input id="url" value="https://bkzpblmshlfvwpanbbju.supabase.co" spellcheck="false">
+  <label>ANON KEY（publishable）</label>
+  <input id="key" value="sb_publishable_V_VbUFOfncfrSPpXkz_NGg_JnWDWY8F" spellcheck="false">
+  <div class="btns">
+    <button id="run">开始自检</button>
+    <button id="copy" class="ghost" disabled>复制结果</button>
+    <span id="summary"></span>
+  </div>
+</div>
+
+<div class="card">
+  <table>
+    <thead><tr><th>#</th><th>状态</th><th>检查项</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <details id="rawBox" style="display:none">
+    <summary>原始响应：recipes 表第一行（真实列名与取值，用于核对模型）</summary>
+    <pre id="raw"></pre>
+  </details>
+  <details id="colBox" style="display:none">
+    <summary>列名差异明细（模型读取列 vs 真库实际列）</summary>
+    <div class="cols" id="coldiff"></div>
+  </details>
+</div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const CFG = () => ({ url: $("url").value.trim().replace(/\/+$/, ""), key: $("key").value.trim() });
+
+$("env").textContent =
+  "环境：" + navigator.userAgent + " ｜ 页面 origin：" + location.origin + " ｜ " + new Date().toLocaleString("zh-CN");
+
+// ---------------------------------------------------------------------------
+// 期望列名（来自 Recipe.fromJson / db_schema_wokmaster.txt 设计文档）
+// ---------------------------------------------------------------------------
+const MODEL_COLS = ["id","title","title_zh","slug","source_type","author_id","cuisine","style_tags","dish_type","form","difficulty_level","difficulty_label","prep_time_min","cook_time_min","total_time_min","active_time_min","passive_time_min","servings_base","min_servings","max_servings","scalable","solo_friendly","family_friendly","party_friendly","spice_level","equipment_required","equipment_optional","diet_tags","allergens_contains","cross_contamination_risk","occasion_tags","goal_tags","shareable","individual_serving","main_cost_per_serving_min","main_cost_per_serving_max","community_appearance_score","community_aroma_score","community_taste_score","community_rating_count","skill_required","base_xp","is_premium","premium_tier","status","data_source","meal_role","hero_image_url","video_url","budget_tier"];
+const REAL_COLS = ["id","title","title_zh","slug","source_type","author_id","cuisine","meal_role","dish_type","difficulty_level","difficulty_label","prep_time_min","cook_time_min","total_time_min","active_time_min","passive_time_min","marinate_time_min","soak_time_min","servings_base","min_servings","max_servings","scalable","solo_friendly","family_friendly","party_friendly","spice_level","sweetness_level","sourness_level","saltiness_level","umami_level","equipment_required","equipment_optional","diet_tags","allergens_contains","cross_contamination_risk","cross_contamination_note","occasion_tags","goal_tags","style_tags","shareable","individual_serving","main_cost_per_serving_min","main_cost_per_serving_max","budget_tier","skill_required","base_xp","vip_bonus","is_premium","premium_tier","community_appearance_score","community_aroma_score","community_taste_score","community_rating_count","data_source","video_url","hero_image_url","status","created_at","updated_at","form","meal_prep_friendly","freezer_friendly","make_ahead","finger_food_friendly","shareable_platter","air_fryer_friendly","one_pot","zero_cleanup","reheat_quality","air_fryer_version"];
+const SCHEMA_COLS = REAL_COLS;
+
+// ---------------------------------------------------------------------------
+// 基础请求封装
+// ---------------------------------------------------------------------------
+async function api(path, opts) {
+  opts = opts || {};
+  const cfg = CFG();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const headers = { "apikey": cfg.key, "Authorization": "Bearer " + cfg.key };
+    if (opts.body) headers["Content-Type"] = "application/json";
+    if (opts.count) headers["Prefer"] = "count=exact";
+    const res = await fetch(cfg.url + "/rest/v1/" + path, {
+      method: opts.method || "GET",
+      headers: headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+      signal: ctrl.signal
+    });
+    const text = await res.text();
+    let json = null;
+    try { json = JSON.parse(text); } catch (e) {}
+    return { ok: res.ok, status: res.status, text: text, json: json, range: res.headers.get("content-range") };
+  } catch (e) {
+    const msg = e.name === "AbortError" ? "请求超时（15s）——网络不通或被拦截" : ("网络错误：" + e.message);
+    return { ok: false, status: 0, text: msg, json: null, range: null, netError: true };
+  } finally { clearTimeout(timer); }
+}
+const qs = o => new URLSearchParams(o).toString();
+const totalFrom = r => { if (!r.range) return null; const m = r.range.match(/\/(\d+)\s*$/); return m ? +m[1] : null; };
+const errBody = r => { const t = (r.text || "").slice(0, 300); return "HTTP " + r.status + " ｜ " + t; };
+const hasAny = (rows, keys) => rows.filter(r => (r.allergens_contains || []).some(a => keys.includes(a)));
+
+// ---------------------------------------------------------------------------
+// 检查项定义
+// ---------------------------------------------------------------------------
+let RAW_ROW = null, ACTUAL_COLS = null, MAPO_ID = null;
+const CHECKS = [
+  { id: "T1", name: "网关连通（anon key 鉴权 + /rest/v1 可达）", fn: async () => {
+      const r = await api("recipes?" + qs({ select: "id", limit: "1" }));
+      if (r.netError) return { status: "fail", summary: "浏览器无法连接 Supabase", detail: r.text + "。若你在中国大陆网络，supabase.co 可能被拦截——需要反向代理或让 App 走服务端中转。" };
+      if (!r.ok) return { status: "fail", summary: "REST 层拒绝请求", detail: errBody(r) + "。key 无效/被撤销，或项目暂停，都会这样。" };
+      return { status: "pass", summary: "HTTP 200，anon key 有效", detail: "返回 " + (r.json || []).length + " 行" };
+    } },
+  { id: "T2", name: "recipes 列结构契约（模型读取的 47 列必须全部存在）", fn: async () => {
+      const r = await api("recipes?" + qs({ select: "*", limit: "1", status: "eq.published" }));
+      if (!r.ok || !Array.isArray(r.json) || !r.json.length) return { status: "fail", summary: "取不到样例行", detail: errBody(r) };
+      RAW_ROW = r.json[0];
+      ACTUAL_COLS = Object.keys(RAW_ROW);
+      const has = c => ACTUAL_COLS.includes(c);
+      const missing = MODEL_COLS.filter(c => !(has(c) || (c === "dish_type" && has("dish"))));
+      const fresh = ACTUAL_COLS.filter(c => !REAL_COLS.includes(c));
+      const det = "真库实际 " + ACTUAL_COLS.length + " 列（真库快照为 70 列）。";
+      if (missing.length) return { status: "fail", summary: "缺 " + missing.length + " 个模型依赖列：" + missing.join(", "), detail: det };
+      if (fresh.length) return { status: "warn", summary: "模型列齐备；发现文档外新列 " + fresh.length + " 个：" + fresh.join(", "), detail: det };
+      return { status: "pass", summary: "47 个模型依赖列全部存在", detail: det };
+    } },
+  { id: "T3", name: "已发布菜谱总量（count=exact）", fn: async () => {
+      const r = await api("recipes?" + qs({ select: "id", limit: "1", status: "eq.published" }), { count: true });
+      if (!r.ok) return { status: "fail", summary: "计数失败", detail: errBody(r) };
+      const n = totalFrom(r);
+      if (n === null) return { status: "warn", summary: "未返回 Content-Range", detail: r.text.slice(0, 200) };
+      if (n < 100) return { status: "warn", summary: "published 共 " + n + " 道（偏少，注意筛选演示效果）", detail: "Content-Range: " + r.range };
+      return { status: "pass", summary: "published 共 " + n + " 道", detail: "Content-Range: " + r.range };
+    } },
+  { id: "T4", name: "正餐过滤 mealsOnly（排除 cocktail/dessert）", fn: async () => {
+      // 忠实复刻 Dart 侧 .not('dish_type','eq','cocktail').not('dish_type','eq','dessert') → 两个同名参数 AND
+      const mp = new URLSearchParams({ select: "dish_type", status: "eq.published", limit: "1000" });
+      mp.append("dish_type", "not.eq.cocktail");
+      mp.append("dish_type", "not.eq.dessert");
+      const all = await api("recipes?" + qs({ select: "dish_type", status: "eq.published", limit: "1000" }));
+      const meals = await api("recipes?" + mp.toString());
+      if (!all.ok || !meals.ok) return { status: "fail", summary: "查询失败", detail: errBody(all.ok ? meals : all) };
+      const cocktails = (all.json || []).filter(x => x.dish_type === "cocktail").length;
+      const desserts = (all.json || []).filter(x => x.dish_type === "dessert").length;
+      if (all.json.length === meals.json.length) return { status: "warn", summary: "过滤未排除任何行（cocktail " + cocktails + " / dessert " + desserts + "）——检查 dish 列是否有值", detail: "all=" + all.json.length + " meals=" + meals.json.length };
+      return { status: "pass", summary: "cocktail " + cocktails + " 道 + dessert " + desserts + " 道被正确排除", detail: "all=" + all.json.length + " → meals=" + meals.json.length };
+    } },
+  { id: "T5", name: "过敏原硬过滤 not.ov（值侧取反，0 泄漏）", fn: async () => {
+      const all = await api("recipes?" + qs({ select: "slug,allergens_contains", status: "eq.published", limit: "1000" }));
+      const filtered = await api("recipes?" + qs({ select: "slug,allergens_contains", status: "eq.published", limit: "1000", allergens_contains: "not.ov.{soy,gluten}" }));
+      if (!all.ok || !filtered.ok) return { status: "fail", summary: "查询失败", detail: errBody(all.ok ? filtered : all) };
+      const ex = ["soy", "gluten"];
+      const excluded = hasAny(all.json || [], ex).length;
+      const leaked = hasAny(filtered.json || [], ex);
+      if (leaked.length) return { status: "fail", summary: "泄漏 " + leaked.length + " 条：" + leaked.map(x => x.slug).join(", "), detail: "not.ov 未生效" };
+      const expectN = (all.json || []).length - excluded;
+      if (expectN !== (filtered.json || []).length) return { status: "warn", summary: "数量对不上：预期 " + expectN + "，实际 " + filtered.json.length, detail: "可能触达 limit=1000 上限" };
+      return { status: "pass", summary: "排除 soy/gluten 后 " + filtered.json.length + " / " + all.json.length + " 道，零泄漏", detail: "" };
+    } },
+  { id: "T6", name: "筛选：cuisine IN（in.）", fn: async () => {
+      const r = await api("recipes?" + qs({ select: "slug,cuisine", status: "eq.published", limit: "400", cuisine: "in.(sichuan)" }));
+      if (!r.ok) return { status: "fail", summary: "查询失败", detail: errBody(r) };
+      const rows = r.json || [];
+      if (!rows.length) return { status: "fail", summary: "sichuan 0 条", detail: "in. 过滤无结果" };
+      const bad = rows.filter(x => x.cuisine !== "sichuan");
+      if (bad.length) return { status: "fail", summary: bad.length + " 条 cuisine 非 sichuan", detail: JSON.stringify(bad.slice(0, 3)) };
+      return { status: "pass", summary: "sichuan " + rows.length + " 条，全部命中", detail: "" };
+    } },
+  { id: "T7", name: "筛选：total_time_min ≤ 30（lte，生成列）", fn: async () => {
+      const r = await api("recipes?" + qs({ select: "slug,total_time_min", status: "eq.published", limit: "400", total_time_min: "lte.30" }));
+      if (!r.ok) return { status: "fail", summary: "查询失败", detail: errBody(r) };
+      const rows = r.json || [];
+      const bad = rows.filter(x => !(x.total_time_min <= 30));
+      if (!rows.length) return { status: "fail", summary: "0 条", detail: "" };
+      if (bad.length) return { status: "fail", summary: bad.length + " 条 > 30min", detail: JSON.stringify(bad.slice(0, 3)) };
+      return { status: "pass", summary: rows.length + " 条全部 ≤ 30min", detail: "" };
+    } },
+  { id: "T8", name: "筛选：spice_level ≤ 1（lte）", fn: async () => {
+      const r = await api("recipes?" + qs({ select: "slug,spice_level", status: "eq.published", limit: "400", spice_level: "lte.1" }));
+      if (!r.ok) return { status: "fail", summary: "查询失败", detail: errBody(r) };
+      const rows = r.json || [];
+      const bad = rows.filter(x => !(x.spice_level <= 1));
+      if (bad.length) return { status: "fail", summary: bad.length + " 条 spice > 1", detail: JSON.stringify(bad.slice(0, 3)) };
+      return { status: "pass", summary: rows.length + " 条全部 ≤ 1", detail: "" };
+    } },
+  { id: "T9", name: "筛选：is_premium = false（免费层 eq）", fn: async () => {
+      const r = await api("recipes?" + qs({ select: "slug,is_premium", status: "eq.published", limit: "400", is_premium: "is.false" }));
+      if (!r.ok) return { status: "fail", summary: "查询失败", detail: errBody(r) };
+      const rows = r.json || [];
+      const bad = rows.filter(x => x.is_premium !== false);
+      if (bad.length) return { status: "fail", summary: bad.length + " 条 is_premium 非 false", detail: JSON.stringify(bad.slice(0, 3)) };
+      if (!rows.length) return { status: "warn", summary: "免费菜谱 0 条", detail: "" };
+      return { status: "pass", summary: "免费 " + rows.length + " 条", detail: "" };
+    } },
+  { id: "T10", name: "筛选：diet_tags 包含 vegetarian（cs 数组包含）", fn: async () => {
+      const r = await api("recipes?" + qs({ select: "slug,diet_tags", status: "eq.published", limit: "400", diet_tags: "cs.{vegetarian}" }));
+      if (!r.ok) return { status: "fail", summary: "查询失败", detail: errBody(r) };
+      const rows = r.json || [];
+      const bad = rows.filter(x => !(x.diet_tags || []).includes("vegetarian"));
+      if (bad.length) return { status: "fail", summary: bad.length + " 条不含 vegetarian", detail: JSON.stringify(bad.slice(0, 3)) };
+      return { status: "pass", summary: "vegetarian " + rows.length + " 条，全部真含", detail: "" };
+    } },
+  { id: "T11", name: "搜索：英文 Mapo 命中 mapo-tofu（or + ilike）", fn: async () => {
+      const r = await api("recipes?" + qs({ select: "slug", status: "eq.published", or: "(title.ilike.*Mapo*,title_zh.ilike.*Mapo*)" }));
+      if (!r.ok) return { status: "fail", summary: "查询失败", detail: errBody(r) };
+      const slugs = (r.json || []).map(x => x.slug);
+      if (!slugs.includes("mapo-tofu")) return { status: "fail", summary: "未命中 mapo-tofu", detail: "返回：" + slugs.slice(0, 10).join(", ") };
+      return { status: "pass", summary: "命中 " + slugs.length + " 条，含 mapo-tofu", detail: slugs.slice(0, 8).join(", ") };
+    } },
+  { id: "T12", name: "搜索：中文「麻婆」命中 mapo-tofu", fn: async () => {
+      const r = await api("recipes?" + qs({ select: "slug", status: "eq.published", or: "(title.ilike.*麻婆*,title_zh.ilike.*麻婆*)" }));
+      if (!r.ok) return { status: "fail", summary: "查询失败", detail: errBody(r) };
+      const slugs = (r.json || []).map(x => x.slug);
+      if (!slugs.includes("mapo-tofu")) return { status: "fail", summary: "中文未命中 mapo-tofu", detail: "返回：" + slugs.slice(0, 10).join(", ") };
+      return { status: "pass", summary: "命中 " + slugs.length + " 条，含 mapo-tofu", detail: slugs.slice(0, 8).join(", ") };
+    } },
+  { id: "T13", name: "详情 JOIN：mapo-tofu 配料/步骤/替代（order 排序）", fn: async () => {
+      const rec = await api("recipes?" + qs({ select: "id,slug,title,title_zh", slug: "eq.mapo-tofu", status: "eq.published" }));
+      if (!rec.ok || !(rec.json || []).length) return { status: "fail", summary: "mapo-tofu 不存在或查询失败", detail: errBody(rec) };
+      MAPO_ID = rec.json[0].id;
+      const ing = await api("ingredients?" + qs({ select: "id,order_index,item,recipe_id", recipe_id: "eq." + MAPO_ID, order: "order_index.asc" }));
+      const stp = await api("recipe_steps?" + qs({ select: "id,step_number,recipe_id", recipe_id: "eq." + MAPO_ID, order: "step_number.asc" }));
+      if (!ing.ok || !stp.ok) return { status: "fail", summary: "JOIN 查询失败", detail: errBody(ing.ok ? stp : ing) };
+      const ings = ing.json || [], steps = stp.json || [];
+      if (!ings.length || !steps.length) return { status: "fail", summary: "配料 " + ings.length + " / 步骤 " + steps.length, detail: "详情页会空白" };
+      const ord = ings.map(x => x.order_index);
+      const sn = steps.map(x => x.step_number);
+      const sorted = a => a.every((v, i) => i === 0 || a[i - 1] <= v);
+      if (!sorted(ord) || !sorted(sn)) return { status: "fail", summary: "排序字段异常", detail: "order=" + ord.join(",") + " step_number=" + sn.join(",") };
+      let subInfo = "";
+      if (ings.length) {
+        const ids = ings.map(x => x.id);
+        const sub = await api("ingredient_substitutes?" + qs({ select: "id,ingredient_id", ingredient_id: "in.(" + ids.join(",") + ")" }));
+        subInfo = sub.ok ? ("；替代方案 " + (sub.json || []).length + " 条") : ("；替代查询失败 " + sub.status);
+      }
+      return { status: "pass", summary: "配料 " + ings.length + " 项、步骤 " + steps.length + " 步" + subInfo, detail: "recipe_id=" + MAPO_ID };
+    } },
+  { id: "T14", name: "复合调料表 compound_seasonings（≥18 项）", fn: async () => {
+      const r = await api("compound_seasonings?" + qs({ select: "id,name", limit: "1", name: "not.is.null" }), { count: true });
+      if (!r.ok) return { status: "fail", summary: "查询失败", detail: errBody(r) + "。表不存在或 RLS 拒绝都会这样。" };
+      const n = totalFrom(r);
+      if (n === null) return { status: "warn", summary: "表可达但无计数", detail: r.text.slice(0, 200) };
+      if (n < 18) return { status: "warn", summary: "仅 " + n + " 项（期望 ≥18）", detail: "Content-Range: " + r.range };
+      return { status: "pass", summary: n + " 项复合调料", detail: "Content-Range: " + r.range };
+    } },
+  { id: "T15", name: "cook_recipe RPC 匿名调用必须被拦截（RLS）", fn: async () => {
+      const id = MAPO_ID || "00000000-0000-0000-0000-000000000000";
+      const r = await api("rpc/cook_recipe", { method: "POST", body: { p_recipe_id: id, p_self_rating: 5, p_appearance: 5, p_aroma: 5, p_taste: 5, p_notes: "" } });
+      if (r.status >= 200 && r.status < 300) return { status: "warn", summary: "匿名 RPC 竟返回 " + r.status + " —— RLS 可能没拦住，打卡可被伪造", detail: r.text.slice(0, 300) };
+      if (r.status === 404) return { status: "info", summary: "RPC 不存在（404）——确认数据库里建了 cook_recipe 函数", detail: r.text.slice(0, 200) };
+      return { status: "pass", summary: "匿名被拦截（HTTP " + r.status + "）", detail: r.text.slice(0, 200) };
+    } },
+  { id: "T16", name: "其余表可达性（ingredients / recipe_steps / ingredient_substitutes）", fn: async () => {
+      const out = [];
+      for (const t of ["ingredients", "recipe_steps", "ingredient_substitutes"]) {
+        const r = await api(t + "?" + qs({ select: "id", limit: "1" }));
+        out.push(t + ": " + (r.ok ? "OK" : ("HTTP " + r.status)));
+      }
+      const bad = out.filter(x => !x.endsWith("OK"));
+      if (bad.length) return { status: "fail", summary: bad.join("；"), detail: "" };
+      return { status: "pass", summary: out.join("；"), detail: "" };
+    } }
+];
+
+// ---------------------------------------------------------------------------
+// 渲染与执行
+// ---------------------------------------------------------------------------
+const ICON = { pass: "✅ 通过", fail: "❌ 失败", warn: "⚠️ 警告", info: "ℹ️ 提示", run: "⏳ 进行中" };
+function addRow(c) {
+  const tr = document.createElement("tr");
+  tr.id = "row-" + c.id;
+  tr.innerHTML = '<td class="id">' + c.id + '</td><td class="st run">' + ICON.run + '</td><td><b>' + c.name + "</b></td>";
+  $("rows").appendChild(tr);
+  return tr;
+}
+function setResult(c, r) {
+  const tr = $("row-" + c.id);
+  tr.className = "r-" + r.status;
+  tr.querySelector(".st").textContent = ICON[r.status];
+  let html = "<b>" + c.name + "</b><br>" + r.summary;
+  if (r.detail) html += '<div class="det">' + r.detail + "</div>";
+  tr.querySelector("td:last-child").innerHTML = html;
+  REPORT.push(c.id + " " + c.name + " → " + ICON[r.status] + " ｜ " + r.summary + (r.detail ? " ｜ " + r.detail : ""));
+}
+let REPORT = [];
+$("run").onclick = async () => {
+  REPORT = []; RAW_ROW = null; ACTUAL_COLS = null; MAPO_ID = null;
+  $("rows").innerHTML = ""; $("summary").textContent = ""; $("copy").disabled = true;
+  $("rawBox").style.display = "none"; $("colBox").style.display = "none";
+  CHECKS.forEach(addRow);
+  for (const c of CHECKS) {
+    let r;
+    try { r = await c.fn(); } catch (e) { r = { status: "fail", summary: "执行异常：" + e.message }; }
+    setResult(c, r);
+  }
+  if (RAW_ROW) {
+    $("raw").textContent = JSON.stringify(RAW_ROW, null, 2);
+    $("rawBox").style.display = "block";
+  }
+  if (ACTUAL_COLS) {
+    const missing = MODEL_COLS.filter(c => !ACTUAL_COLS.includes(c) && !(c === "dish_type" && ACTUAL_COLS.includes("dish")));
+    const fresh = ACTUAL_COLS.filter(c => !REAL_COLS.includes(c));
+    const unread = REAL_COLS.filter(c => !MODEL_COLS.includes(c) && ACTUAL_COLS.includes(c));
+    $("coldiff").innerHTML =
+      "<div><h4>真库实际列（" + ACTUAL_COLS.length + "）</h4>" + ACTUAL_COLS.map(c => '<code class="new">' + c + "</code>").join("") + "</div>" +
+      "<div><h4>模型缺列（必须修）</h4>" + (missing.length ? missing.map(c => '<code class="bad">' + c + "</code>").join("") : "<span style='color:#16a34a'>无</span>") +
+      "<h4 style='margin-top:10px'>快照外新列（真库又演进，需关注）</h4>" + (fresh.length ? fresh.map(c => '<code class="new">' + c + "</code>").join("") : "<span style='color:#6b7280'>无</span>") +
+      "<h4 style='margin-top:10px'>真库有但模型没读的列</h4>" + (unread.length ? unread.map(c => "<code>" + c + "</code>").join("") : "<span style='color:#6b7280'>无</span>") + "</div>";
+    $("colBox").style.display = "block";
+  }
+  const pass = REPORT.filter(x => x.includes("通过")).length;
+  const fail = REPORT.filter(x => x.includes("失败")).length;
+  const warn = REPORT.filter(x => x.includes("警告")).length;
+  $("summary").textContent = "完成：" + pass + " 通过 / " + fail + " 失败 / " + warn + " 警告";
+  REPORT.unshift("Wokmaster Supabase 自检 ｜ " + new Date().toLocaleString("zh-CN") + " ｜ URL=" + CFG().url);
+  REPORT.push("汇总：" + pass + " 通过 / " + fail + " 失败 / " + warn + " 警告");
+  $("copy").disabled = false;
+};
+$("copy").onclick = async () => {
+  const text = REPORT.join("\n");
+  try { await navigator.clipboard.writeText(text); $("copy").textContent = "已复制 ✓"; }
+  catch (e) {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); ta.remove(); $("copy").textContent = "已复制 ✓";
+  }
+  setTimeout(() => $("copy").textContent = "复制结果", 2000);
+};
+</script>
+</body>
+</html>
