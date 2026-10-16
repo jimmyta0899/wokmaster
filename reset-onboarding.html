@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wokmaster · 重置新手问卷</title>
+<style>
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+       background:linear-gradient(160deg,#fffaf3,#fff3e0);color:#7c2d12;
+       font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;text-align:center}
+  .box{max-width:420px;padding:32px}
+  h1{font-size:20px;margin:0 0 10px}
+  p{font-size:14px;color:#9a6b4f;line-height:1.7;margin:6px 0}
+  code{background:#fff;border:1px solid #f0d9c0;border-radius:4px;padding:1px 6px;font-size:12px}
+  .ok{font-size:15px;color:#166534;font-weight:600}
+  a{color:#b45309;font-weight:600;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>重置新手问卷</h1>
+  <p id="msg">正在清除本机保存的问卷完成标记…</p>
+  <p class="ok" id="done" style="display:none">✔ 已清除，正在返回 App，问卷会重新出现</p>
+  <p>如果页面没有自动跳转，<a href="./">点这里返回</a></p>
+  <p style="font-size:12px;margin-top:18px">只删除 <code>onboarding_done</code> 标记，不会动你的菜谱数据。</p>
+</div>
+<script>
+  var removed = [];
+  Object.keys(localStorage).forEach(function (k) {
+    if (k.indexOf("onboarding") !== -1) {
+      localStorage.removeItem(k);
+      removed.push(k);
+    }
+  });
+  document.getElementById("msg").style.display = "none";
+  var d = document.getElementById("done");
+  d.style.display = "block";
+  d.textContent = removed.length
+    ? "✔ 已清除 " + removed.join(", ") + "，正在返回 App…"
+    : "本机本来就没有完成标记，直接返回 App…";
+  setTimeout(function () { location.replace("./"); }, 1600);
+</script>
+</body>
+</html>
