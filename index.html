@@ -87,6 +87,55 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+
+  <!--
+    忌口硬过滤补丁（修复原版缺陷：exclusionsProvider 冷启动恒为空，刷新后
+    问卷「I don't eat…」的忌口过滤静默失效，推荐流出现忌口菜）。
+    原理：在请求层把 localStorage 里的忌口列表追加为
+    allergens_contains=not.ov.{a,b}（与仓库层 q.not('allergens_contains','ov',…)
+    语义逐字一致）；App 自己已带该参数、或详情页单菜请求（slug=eq.）不重复追加。
+  -->
+  <script>
+    (function () {
+      function exclusions() {
+        try {
+          var v = JSON.parse(localStorage.getItem("flutter.exclusions") || "[]");
+          return Array.isArray(v) ? v.filter(Boolean) : [];
+        } catch (e) { return []; }
+      }
+      function patched(url) {
+        if (typeof url !== "string") return url;
+        var at = url.indexOf("/rest/v1/recipes");
+        if (at === -1) return url;                     // 只拦 recipes 表
+        var tail = url.slice(at + 16);
+        if (tail.indexOf("slug=eq.") !== -1) return url; // 详情单菜：交给 App 自身校验
+        if (tail.indexOf("allergens_contains") !== -1) return url; // 已带过滤不重复
+        var ex = exclusions();
+        if (!ex.length) return url;
+        return url + (url.indexOf("?") === -1 ? "?" : "&") +
+          "allergens_contains=" + encodeURIComponent("not.ov.{" + ex.join(",") + "}");
+      }
+      var _fetch = window.fetch;
+      if (_fetch) {
+        window.fetch = function (input, init) {
+          try {
+            if (typeof input === "string") input = patched(input);
+            else if (input && typeof input.url === "string") {
+              input = new Request(patched(input.url), input);
+            }
+          } catch (e) {}
+          return _fetch.call(this, input, init);
+        };
+      }
+      var _open = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function (method, url) {
+        var args = Array.prototype.slice.call(arguments);
+        try { args[1] = patched(args[1]); } catch (e) {}
+        return _open.apply(this, args);
+      };
+    })();
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
