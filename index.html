@@ -1,141 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="/wokmaster/">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Wokmaster — English Chinese cooking app for the US market.">
+  <meta name="description" content="Wokmaster — English-first Chinese cooking app.">
 
-  <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Wokmaster">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
   <title>Wokmaster</title>
   <link rel="manifest" href="manifest.json">
-
-  <!-- 首屏骨架：Flutter 引擎约 10MB，默认在下载完成前是一片纯白。
-       这里先渲染品牌启动页，收到 flutter-first-frame 后淡出移除。 -->
-  <style>
-    html,body{margin:0;height:100%}
-    #splash{
-      position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;
-      align-items:center;justify-content:center;gap:18px;
-      background:linear-gradient(160deg,#fffaf3 0%,#fff3e0 100%);
-      font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-      transition:opacity .35s ease;
-    }
-    #splash .wok{
-      width:78px;height:78px;border-radius:50%;
-      background:radial-gradient(circle at 34% 30%,#fbbf24,#b45309 72%);
-      box-shadow:0 10px 26px rgba(180,83,9,.28);
-      animation:bob 1.6s ease-in-out infinite;
-    }
-    @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
-    #splash h1{margin:0;font-size:26px;letter-spacing:.14em;color:#7c2d12;font-weight:700}
-    #splash p{margin:0;font-size:13px;color:#9a6b4f;letter-spacing:.05em}
-    #splash .bar{
-      width:190px;height:4px;border-radius:99px;background:#fde3c2;overflow:hidden;margin-top:2px
-    }
-    #splash .bar i{
-      display:block;height:100%;width:38%;border-radius:99px;background:#b45309;
-      animation:slide 1.15s ease-in-out infinite
-    }
-    @keyframes slide{0%{transform:translateX(-105%)}100%{transform:translateX(275%)}}
-  </style>
 </head>
 <body>
-  <div id="splash">
-    <div class="wok"></div>
-    <h1>WOKMASTER</h1>
-    <p>正在装载厨房…</p>
-    <div class="bar"><i></i></div>
-  </div>
-  <script>
-    // Flutter 渲染出第一帧后移除骨架（引擎未就绪时这段不会执行，骨架一直显示）
-    window.addEventListener('flutter-first-frame', function () {
-      var s = document.getElementById('splash');
-      if (!s) return;
-      s.style.opacity = '0';
-      setTimeout(function () { s.remove(); }, 400);
-    });
-  </script>
-
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
-
-  <!--
-    忌口硬过滤补丁（修复原版缺陷：exclusionsProvider 冷启动恒为空，刷新后
-    问卷「I don't eat…」的忌口过滤静默失效，推荐流出现忌口菜）。
-    原理：在请求层把 localStorage 里的忌口列表追加为
-    allergens_contains=not.ov.{a,b}（与仓库层 q.not('allergens_contains','ov',…)
-    语义逐字一致）；App 自己已带该参数、或详情页单菜请求（slug=eq.）不重复追加。
-  -->
-  <script>
-    (function () {
-      function exclusions() {
-        try {
-          var v = JSON.parse(localStorage.getItem("flutter.exclusions") || "[]");
-          return Array.isArray(v) ? v.filter(Boolean) : [];
-        } catch (e) { return []; }
-      }
-      function patched(url) {
-        if (typeof url !== "string") return url;
-        var at = url.indexOf("/rest/v1/recipes");
-        if (at === -1) return url;                     // 只拦 recipes 表
-        var tail = url.slice(at + 16);
-        if (tail.indexOf("slug=eq.") !== -1) return url; // 详情单菜：交给 App 自身校验
-        if (tail.indexOf("allergens_contains") !== -1) return url; // 已带过滤不重复
-        var ex = exclusions();
-        if (!ex.length) return url;
-        return url + (url.indexOf("?") === -1 ? "?" : "&") +
-          "allergens_contains=" + encodeURIComponent("not.ov.{" + ex.join(",") + "}");
-      }
-      var _fetch = window.fetch;
-      if (_fetch) {
-        window.fetch = function (input, init) {
-          try {
-            if (typeof input === "string") input = patched(input);
-            else if (input && typeof input.url === "string") {
-              input = new Request(patched(input.url), input);
-            }
-          } catch (e) {}
-          return _fetch.call(this, input, init);
-        };
-      }
-      var _open = XMLHttpRequest.prototype.open;
-      XMLHttpRequest.prototype.open = function (method, url) {
-        var args = Array.prototype.slice.call(arguments);
-        try { args[1] = patched(args[1]); } catch (e) {}
-        return _open.apply(this, args);
-      };
-    })();
-  </script>
-
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
