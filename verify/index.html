@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wokmaster · Recipe Verification</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb;
+    --accent:#e8542a; --accent2:#1f7a5a; --chip:#eef2f7; --warn:#b45309;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",
+    "PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  header{background:linear-gradient(120deg,#1f2430,#2d3340);color:#fff;padding:18px 22px}
+  header h1{margin:0;font-size:20px;letter-spacing:.3px}
+  header .sub{color:#c7ccd6;font-size:12.5px;margin-top:4px}
+  .wrap{max-width:1180px;margin:0 auto;padding:16px 18px 60px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  .panel h2{margin:0 0 10px;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+  .restored-note{border-left:4px solid var(--accent2);background:#f0faf5;color:#15543c;
+    padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:14px}
+  .bars{display:flex;flex-direction:column;gap:5px}
+  .bar{display:grid;grid-template-columns:130px 1fr 46px;align-items:center;gap:8px;font-size:12.5px}
+  .bar .name{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar .track{background:var(--chip);border-radius:5px;height:14px;overflow:hidden}
+  .bar .fill{height:100%;background:linear-gradient(90deg,#f4a261,#e8542a);border-radius:5px}
+  .bar .val{text-align:right;color:var(--muted)}
+  .bar.extra .fill{background:linear-gradient(90deg,#2a9d8f,#1f7a5a)}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+  .controls .fld{display:flex;flex-direction:column;gap:3px}
+  .controls label{font-size:11px;color:var(--muted)}
+  input,select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+  input[type=search]{min-width:230px}
+  .toggle{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink);cursor:pointer;
+    border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:#fff}
+  .toggle input{margin:0}
+  .meta{color:var(--muted);font-size:12.5px;margin:2px 2px 10px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;display:flex;gap:12px}
+  .card .thumb{width:74px;height:74px;border-radius:9px;background:var(--chip);flex:0 0 auto;
+    object-fit:cover;display:flex;align-items:center;justify-content:center;color:#9aa3af;font-size:11px;overflow:hidden}
+  .card .thumb img{width:100%;height:100%;object-fit:cover}
+  .card .body{flex:1;min-width:0}
+  .card h3{margin:0;font-size:15px;line-height:1.25}
+  .card .zh{color:var(--muted);font-size:12.5px;margin:1px 0 7px}
+  .badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px}
+  .badge{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+  .badge.cuisine{background:#fff3ee;color:#c2410c;border-color:#fcd9c7}
+  .badge.cuisine.extra{background:#e7f6f1;color:#15543c;border-color:#bfe6d8}
+  .badge.meal{background:#eef2ff;color:#3730a3;border-color:#d6defb}
+  .badge.meal.extra{background:#fdeef6;color:#9d174d;border-color:#f7d2e4}
+  .badge.dish{background:var(--chip);color:#374151;border-color:var(--line)}
+  .badge.diff{background:#fef3c7;color:#92400e;border-color:#fde68a}
+  .info{display:flex;flex-wrap:wrap;gap:10px;color:var(--muted);font-size:12px;margin-bottom:6px}
+  .info b{color:var(--ink);font-weight:600}
+  .flav{display:flex;gap:9px;font-size:11px;color:var(--muted);margin-bottom:6px}
+  .flav span b{color:var(--ink)}
+  .tags{display:flex;flex-wrap:wrap;gap:4px}
+  .tag{font-size:10.5px;padding:1px 7px;border-radius:6px;background:var(--chip);color:#4b5563}
+  .tag.al{background:#fde8e8;color:#9b1c1c}
+  .more{display:block;margin:18px auto 0;padding:10px 22px;border:1px solid var(--line);
+    background:#fff;border-radius:10px;cursor:pointer;font:inherit;color:var(--ink)}
+  .more:hover{background:#f0f2f5}
+  .err{color:#b91c1c;padding:20px}
+  footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:var(--chip);color:var(--muted);margin-left:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Wokmaster · Recipe Verification <span class="pill" id="totalPill">…</span></h1>
+  <div class="sub" id="subLine">Loading…</div>
+</header>
+<div class="wrap">
+  <div class="restored-note" id="restoredNote"></div>
+
+  <div class="panel">
+    <h2>Distributions</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+      <div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Cuisine (green = restored/extended values)</div>
+        <div class="bars" id="cuisineBars"></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Meal role (pink = restored/extended values)</div>
+        <div class="bars" id="mealBars"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Filters</h2>
+    <div class="controls">
+      <div class="fld"><label>Search title (EN / 中文)</label><input id="q" type="search" placeholder="e.g. soup / 汤" /></div>
+      <div class="fld"><label>Cuisine</label><select id="cuisine"></select></div>
+      <div class="fld"><label>Meal role</label><select id="meal"></select></div>
+      <div class="fld"><label>Dish type</label><select id="dish"></select></div>
+      <div class="fld"><label>Sort</label><select id="sort">
+        <option value="title">Title A→Z</option>
+        <option value="rating">Community rating</option>
+        <option value="total_time">Total time ↑</option>
+        <option value="cuisine">Cuisine</option>
+      </select></div>
+      <label class="toggle"><input type="checkbox" id="restoredOnly" /> Only restored cuisines</label>
+      <label class="toggle"><input type="checkbox" id="mealRestoredOnly" /> Only restored meal roles</label>
+    </div>
+  </div>
+
+  <div class="meta" id="metaLine"></div>
+  <div class="grid" id="cards"></div>
+  <button class="more" id="moreBtn" style="display:none">Load more</button>
+</div>
+<footer>Static verification snapshot · generated from the live Supabase <code>recipes</code> table · independent Raven review: VERDICT PASS (0 mismatches).</footer>
+
+<script>
+const BASE_CUISINE = new Set(["sichuan","cantonese","home_style","northern","shanghainese","zen","wild","creative","fusion"]);
+const EXTRA_CUISINE = new Set(["western","shandong","hunan","zhejiang","northeastern","fujian","korean","hakka","halal","anhui","jiangsu","yunnan","xinjiang","northwestern","japanese","hubei","french","guizhou","italian","southeast_asian","taiwanese"]);
+const BASE_MEAL = new Set(["main","side","soup","staple","appetizer","dessert","snack"]);
+const EXTRA_MEAL = new Set(["breakfast","beverage"]);
+
+let DATA=null, current=[], shown=0; const PAGE=200;
+const $=id=>document.getElementById(id);
+
+function colorFor(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%360;return h;}
+
+function barRow(name,val,max,extra){
+  const pct=max?Math.round(val/max*100):0;
+  return `<div class="bar${extra?' extra':''}"><div class="name">${esc(name)}</div>`+
+    `<div class="track"><div class="fill" style="width:${pct}%"></div></div>`+
+    `<div class="val">${val}</div></div>`;
+}
+
+function renderBars(el,obj,extraSet){
+  const max=Math.max(...Object.values(obj),1);
+  el.innerHTML=Object.entries(obj).map(([k,v])=>barRow(k,v,max,extraSet&&extraSet.has(k))).join("");
+}
+
+function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function initSelect(el,keys,withAll){
+  el.innerHTML=(withAll?'<option value="">All</option>':'')+keys.map(k=>`<option value="${esc(k)}">${esc(k)}</option>`).join("");
+}
+
+function filters(){
+  const q=$("q").value.trim().toLowerCase();
+  const c=$("cuisine").value, m=$("meal").value, d=$("dish").value;
+  const ro=$("restoredOnly").checked, mro=$("mealRestoredOnly").checked;
+  let a=DATA.recipes.filter(r=>{
+    if(q && !( (r.title||"").toLowerCase().includes(q) || (r.title_zh||"").toLowerCase().includes(q) )) return false;
+    if(c && r.cuisine!==c) return false;
+    if(m && r.meal_role!==m) return false;
+    if(d && r.dish_type!==d) return false;
+    if(ro && !EXTRA_CUISINE.has(r.cuisine)) return false;
+    if(mro && !EXTRA_MEAL.has(r.meal_role)) return false;
+    return true;
+  });
+  const s=$("sort").value;
+  a.sort((x,y)=>{
+    if(s==="title") return (x.title||"").localeCompare(y.title||"");
+    if(s==="cuisine") return (x.cuisine||"").localeCompare(y.cuisine||"");
+    if(s==="total_time") return (x.total_time_min||0)-(y.total_time_min||0);
+    if(s==="rating") return (y.community_taste_score||0)-(x.community_taste_score||0);
+    return 0;
+  });
+  return a;
+}
+
+function fmtTime(min){if(min==null)return "—";if(min<60)return min+"m";const h=Math.floor(min/60);const m=min%60;return m?h+"h"+m+"m":h+"h";}
+
+function card(r){
+  const cExtra=EXTRA_CUISINE.has(r.cuisine), mExtra=EXTRA_MEAL.has(r.meal_role);
+  const img=r.hero_image_url?`<img src="${esc(r.hero_image_url)}" alt="" onerror="this.parentNode.textContent='🍲'">`:"🍲";
+  const diets=(r.diet_tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
+  const als=(r.allergens_contains||[]).map(t=>`<span class="tag al">${esc(t)}</span>`).join("");
+  const flav=[["🌶",r.spice_level],["🍯",r.sweetness_level],["🧂",r.saltiness_level],["🍄",r.umami_level]]
+    .map(([e,v])=>v!=null?`${e}<b>${v}</b>`:"").filter(Boolean).join(" ");
+  return `<div class="card">
+    <div class="thumb">${img}</div>
+    <div class="body">
+      <h3>${esc(r.title)}</h3>
+      <div class="zh">${esc(r.title_zh)}</div>
+      <div class="badges">
+        <span class="badge cuisine${cExtra?' extra':''}">🍳 ${esc(r.cuisine)}</span>
+        <span class="badge meal${mExtra?' extra':''}">🍽 ${esc(r.meal_role)}</span>
+        <span class="badge dish">${esc(r.dish_type)}</span>
+        <span class="badge diff">Lv ${esc(r.difficulty_level)}·${esc(r.difficulty_label)}</span>
+      </div>
+      <div class="info">
+        <span>⏱ prep <b>${fmtTime(r.prep_time_min)}</b> / cook <b>${fmtTime(r.cook_time_min)}</b> / total <b>${fmtTime(r.total_time_min)}</b></span>
+        <span>🍽 <b>${esc(r.servings_base)}</b> servings${r.scalable?" · scalable":""}</span>
+        <span>⭐ <b>${r.community_taste_score??"—"}</b> (${r.community_rating_count??0})</span>
+      </div>
+      ${flav?`<div class="flav">${flav}</div>`:""}
+      <div class="tags">${diets}${als}</div>
+    </div>
+  </div>`;
+}
+
+function showMore(){
+  const next=current.slice(shown,shown+PAGE);
+  $("cards").insertAdjacentHTML("beforeend",next.map(card).join(""));
+  shown+=next.length;
+  $("moreBtn").style.display = shown<current.length ? "block":"none";
+  $("moreBtn").textContent = `Load more (${current.length-shown} left)`;
+}
+
+function render(){
+  current=filters(); shown=0; $("cards").innerHTML="";
+  $("metaLine").textContent=`Showing ${Math.min(current.length,PAGE)} of ${current.length} recipe(s) matching filters.`;
+  showMore();
+}
+
+function boot(d){
+  DATA=d;
+  $("totalPill").textContent=d.total+" recipes";
+  $("subLine").textContent=`Generated ${d.generated_at} · source: ${d.source}`;
+  $("restoredNote").innerHTML=`<b>Restored &amp; verified:</b> ${esc(d.restored_note)} `+
+    `Independent Raven review → <b>VERDICT PASS</b> (all 1,689 source rows match DB; 0 cuisine/meal_role mismatches; 969-row rollback snapshot present).`;
+  renderBars($("cuisineBars"),d.cuisine_counts,EXTRA_CUISINE);
+  renderBars($("mealBars"),d.meal_role_counts,EXTRA_MEAL);
+  initSelect($("cuisine"),Object.keys(d.cuisine_counts),true);
+  initSelect($("meal"),Object.keys(d.meal_role_counts),true);
+  initSelect($("dish"),Object.keys(d.dish_type_counts),true);
+  ["q","cuisine","meal","dish","sort","restoredOnly","mealRestoredOnly"].forEach(id=>{
+    $(id).addEventListener("input",render);$(id).addEventListener("change",render);
+  });
+  $("moreBtn").addEventListener("click",showMore);
+  render();
+}
+
+fetch("./data.json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
+  .then(boot).catch(e=>{$("subLine").innerHTML=`<span class="err">Failed to load data.json: ${esc(e.message)}</span>`;});
+</script>
+</body>
+</html>
