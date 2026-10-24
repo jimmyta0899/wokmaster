@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <base href="/wokmaster/">
 
@@ -16,8 +16,65 @@
 
   <title>Wokmaster</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body { margin: 0; height: 100%; background: #FFF9F5; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif; color: #3B2B24; }
+    #boot { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 16px; padding: 32px;
+            text-align: center; background: #FFF9F5; }
+    #boot .logo { font-size: 27px; font-weight: 700; letter-spacing: .2px; }
+    #boot .logo em { color: #B4553F; font-style: normal; }
+    #boot .spin { width: 22px; height: 22px; border: 2.5px solid #F0D8CE;
+                  border-top-color: #B4553F; border-radius: 50%; animation: sp .8s linear infinite; }
+    @keyframes sp { to { transform: rotate(360deg); } }
+    #boot .msg { font-size: 14px; line-height: 1.7; color: #7A655C; max-width: 330px; }
+    #boot .msg small { font-size: 12.5px; opacity: .75; }
+    #boot .hint { display: none; font-size: 13px; line-height: 1.75; color: #8A6A5F; max-width: 340px; }
+    #boot .hint b { color: #3B2B24; }
+    #boot .hint a { display: inline-block; margin-top: 10px; padding: 9px 18px; border-radius: 999px;
+                    background: #B4553F; color: #fff; text-decoration: none; font-weight: 600; }
+    #boot.late .spin { opacity: .35; }
+    #boot.late .hint { display: block; }
+    #boot.fail .spin { display: none; }
+    #boot.fail .msg { display: none; }
+    #boot.fail .hint { display: block; }
+  </style>
 </head>
 <body>
+  <div id="boot">
+    <div class="logo">Wok<em>Master</em></div>
+    <div class="spin"></div>
+    <div class="msg">
+      Loading your kitchen…<br>
+      <small>正在加载，请稍候</small>
+    </div>
+    <div class="hint" id="bootHint">
+      <b>Still not loading?</b><br>
+      This preview needs WebGL and WebAssembly. If you see a blank screen inside an
+      in-app preview panel, open the link in Chrome, Edge or Safari instead.<br>
+      <a href="./" onclick="location.reload(true);return false;">Reload / 重新加载</a>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var boot = document.getElementById('boot');
+      var t1 = setTimeout(function () { boot.classList.add('late'); }, 7000);
+      var t2 = setTimeout(function () { boot.classList.add('fail'); }, 22000);
+      window.__wmBootDone = function () {
+        clearTimeout(t1); clearTimeout(t2);
+        if (boot && boot.parentNode) boot.parentNode.removeChild(boot);
+      };
+      window.__wmBootFail = function (reason) {
+        clearTimeout(t1); clearTimeout(t2);
+        if (!boot) return;
+        boot.classList.add('fail');
+        var h = document.getElementById('bootHint');
+        if (h && reason) h.insertAdjacentHTML('afterbegin', '<b>Renderer error:</b> ' + reason + '<br><br>');
+      };
+    })();
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
