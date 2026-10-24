@@ -58,6 +58,28 @@
   </div>
 
   <script>
+    // Self-heal: an old Flutter service worker can serve a stale main.dart.js
+    // against the new index.html, which shows up as a permanently blank page.
+    (function () {
+      if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return;
+      navigator.serviceWorker.getRegistrations()
+        .then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })
+        .then(function () {
+          if (!window.caches) return;
+          return caches.keys().then(function (ks) {
+            return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+          });
+        })
+        .then(function () {
+          if (sessionStorage.getItem('wmSWCleared')) return;
+          sessionStorage.setItem('wmSWCleared', '1');
+          location.reload();
+        })
+        .catch(function () {});
+    })();
+  </script>
+
+  <script>
     (function () {
       var boot = document.getElementById('boot');
       var t1 = setTimeout(function () { boot.classList.add('late'); }, 7000);

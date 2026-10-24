@@ -41,10 +41,10 @@ if (!window._flutter) {
 _flutter.buildConfig = {"engineRevision":"cf636b1dfb818dd6a3ff16e390e93b1a036969c8","wasmHashes":{"canvaskit.wasm":"fbed517a43e82452404446683f00f2e876d835aed84410695759e67b6bb01cd3","chromium/canvaskit.wasm":"ae8ff1d858140f7b1300ced3fa89fb8c9dce0a400a0f4f1e11f6dcfb3315fdcf","skwasm.wasm":"e540fd5e8303b7b68ec2718cb49e9c421f8ade3075b15e02a7059a62654df9a1","skwasm_heavy.wasm":"565f5cc1cca6ab120f11934b105f01fec4b58b480c82e0889dca93af8e6f8635","webparagraph/canvaskit.wasm":"0ce1b05082efdc8529550e8a01f6ff0593972d55525035010e26f5600aa9f254","wimp.wasm":"e924eaafd801d41e017d178f3fd5cf8a417f641fe35c9ed34a4e1d7582283e0c"},"builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.js"},{}]};
 
 
+// Service worker intentionally disabled: a stale SW could serve an older
+// main.dart.js against a newer index.html and render a white screen.
 _flutter.loader.load({
-  serviceWorkerSettings: {
-    serviceWorkerVersion: ""133680378" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */"
-  },
+  serviceWorkerSettings: null,
   onEntrypointLoaded: async function (engineInitializer) {
     try {
       const appRunner = await engineInitializer.initializeEngine();
