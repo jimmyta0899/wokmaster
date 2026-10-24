@@ -110963,7 +110963,7 @@ b=t.p
 c=A.cr(A.b([e,B.eJ,A.M(""+d,a7,a7,a7,c,a7,a7)],b),B.u,B.m,B.q,0)
 d=a6.y
 d=A.b([c,A.aZC(9,""+d,10,1,new A.aLF(a6),d)],b)
-if(a6.y>4){e=A.X("Cook in batches (pot capacity ~4 servings). Estimated cost: $"+B.d.ai(l,2),"\u9700\u5206\u6279\u70f9\u996a\uff08\u9505\u5177\u5bb9\u91cf\u7ea6 4 \u4eba\u4efd\uff09\u3002\u9884\u4f30\u6210\u672c\uff1a$"+B.d.ai(l,2))
+if(a6.y>4){e=l>0?A.X("Cook in batches (pot capacity ~4 servings). Estimated cost: $"+B.d.ai(l,2),"\u9700\u5206\u6279\u70f9\u996a\uff08\u9505\u5177\u5bb9\u91cf\u7ea6 4 \u4eba\u4efd\uff09\u3002\u9884\u4f30\u6210\u672c\uff1a$"+B.d.ai(l,2)):A.X("Cook in batches (pot capacity ~4 servings). Cost unavailable.","\u9700\u5206\u6279\u70f9\u996a\uff08\u9505\u5177\u5bb9\u91cf\u7ea6 4 \u4eba\u4efd\uff09\u3002\u6682\u65e0\u4ef7\u683c\u6570\u636e\u3002")
 c=g.Q
 d.push(A.M(e,a7,a7,a7,c==null?a7:c.ie(B.af),a7,a7))}e=A.j5(new A.aA(B.pE,A.c0(d,B.u,B.m,B.q),a7),a7,a7)
 d=a8.ax
@@ -110971,13 +110971,14 @@ c=d.d
 if(c==null)c=d.b
 a=A.cz(12)
 a0=a6.z
-a1=B.d.ai(l,2)
+if(l>0){a1=B.d.ai(l,2)
 a2=k?" \xb7 some items: Cost unavailable":""
 a3=a6.z
 a4=B.d.ai(l,2)
 a5=k?" \xb7 \u90e8\u5206\u6761\u76ee\uff1a\u6682\u65e0\u4ef7\u683c\u6570\u636e":""
 a5=A.X("Estimated cost at "+a0+": $"+a1+a2,a3+" \u9884\u4f30\u6210\u672c\uff1a$"+a4+a5)
-h=A.b([new A.yY(B.NT,h,new A.aLG(a6),a7,t.eP),B.aO,e,B.Y,A.cY(a7,A.M(a5,a7,a7,a7,f==null?a7:f.ie(B.af),a7,a7),B.n,a7,a7,new A.cs(c,a7,a7,a,a7,a7,B.a1),a7,a7,a7,B.bM,a7,a7,a7),B.aO,a6.ZS(a8,"\ud83d\uded2 "+a6.z,s,!0)],b)
+a0=a5}else a0=A.X("Cost unavailable at "+a0+" \u2014 no price data for these items yet.",a0+" \u6682\u65e0\u4ef7\u683c\u6570\u636e \u2014\u2014 \u8fd9\u4e9b\u98df\u6750\u8fd8\u6ca1\u6709\u62a5\u4ef7\u3002")
+h=A.b([new A.yY(B.NT,h,new A.aLG(a6),a7,t.eP),B.aO,e,B.Y,A.cY(a7,A.M(a0,a7,a7,a7,f==null?a7:f.ie(B.af),a7,a7),B.n,a7,a7,new A.cs(c,a7,a7,a,a7,a7,B.a1),a7,a7,a7,B.bM,a7,a7,a7),B.aO,a6.ZS(a8,"\ud83d\uded2 "+a6.z,s,!0)],b)
 if(r.length!==0){e=d.cy
 if(e==null){e=d.CW
 if(e==null)e=d.y}d=A.cz(10)
@@ -110986,7 +110987,7 @@ c=A.X("May not be available at "+c+" \u2014 find at "+b1+":",c+" \u53ef\u80fd\u4
 g=g.Q
 g=A.b([B.Y,A.cY(a7,A.M(c,a7,a7,a7,g==null?a7:g.ie(B.af),a7,a7),B.n,a7,a7,new A.cs(e,a7,a7,d,a7,a7,B.a1),a7,a7,a7,B.ft,a7,a7,a7)],b)
 B.b.H(g,new A.V(r,new A.aLH(a6,b1,a8),t.xA))
-B.b.H(h,g)}if(q.length!==0)B.b.H(h,A.b([B.Y,a6.auk(a8,A.X("Asian aisle / other","\u4e9a\u6d32\u8d27\u67b6 / \u5176\u4ed6"),q)],b))
+B.b.H(h,g)}if(q.length!==0)B.b.H(h,A.b([B.Y,a6.auk(a8,A.X("Asian aisle & other","\u4e9a\u6d32\u8d27\u67b6\u53ca\u5176\u4ed6"),q)],b))
 h.push(B.aC)
 if(B.b.dt(b0,new A.aLI())){g=A.b([A.M(A.X("From recipes (tap to remove)","\u6765\u6e90\u83dc\u8c31\uff08\u70b9\u51fb\u79fb\u9664\uff09"),a7,a7,a7,f,a7,a7),B.dC],b)
 i=A.aG(i)
