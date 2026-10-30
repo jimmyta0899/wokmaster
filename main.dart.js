@@ -33968,6 +33968,7 @@ if(B.c.n(s,"images.unsplash.com"))return null
 return s},
 b8l(a){var s=B.c.aB(a==null?"":a)
 if(B.c.n(s,"stariidata.com"))return s
+if(B.c.n(s,"/wokmaster-steps/steps/"))return s
 if(B.c.n(s,"/wokmaster/steps/"))return s
 return null},
 bnl(a){var s,r=a.T,q=B.c.aB(r==null?"":r)
