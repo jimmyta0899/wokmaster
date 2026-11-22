@@ -288,12 +288,12 @@
             <div class="boot-mark">W</div>
             <div class="boot-name">WOKMASTER</div>
             <div class="spin"></div>
-            <div class="boot-tip" id="bootTip">Flutter 首帧编译中，通常 20–40 秒</div>
-            <div class="boot-timer" id="bootTimer">0.0s</div>
+            <div class="boot-tip" id="bootTip">点左侧菜单加载</div>
+            <div class="boot-timer" id="bootTimer"></div>
           </div>
         </div>
 
-        <iframe id="app" src="https://jimmyta0899.github.io/wokmaster/" allow="clipboard-write; clipboard-read"></iframe>
+        <iframe id="app" src="" allow="clipboard-write; clipboard-read"></iframe>
 
         <div class="statusbar" id="sb">
           <div class="sb-time">9:41</div>
@@ -375,7 +375,11 @@
   function go(path, btn){
     markNav(btn);
     startBoot();
-    frame.src = APP.replace(/\/$/,'') + '/#' + path;
+    if (!frame.src) {
+      frame.src = APP.replace(/\/$/,'') + '/#' + path;
+    } else {
+      frame.contentWindow.location.hash = path;
+    }
   }
   function startBoot(){ document.getElementById('boot').classList.remove('gone'); startTimer(); }
   function endBoot(){ document.getElementById('boot').classList.add('gone'); }
@@ -467,7 +471,10 @@
 
   /* ---------- 动作 ---------- */
   document.getElementById('reload').addEventListener('click', function(){
-    startTimer(); frame.src = frame.src;
+    startTimer();
+    if (frame.src) {
+      frame.src = frame.src; // 完整重载
+    }
   });
   document.getElementById('openTab').addEventListener('click', function(){
     window.open(APP, '_blank');
@@ -475,7 +482,7 @@
 
   /* ---------- 初始化 ---------- */
   applyDevice(DEVICES[0]);
-  startTimer();
+  // 不自动计时：等用户点菜单再 startTimer
   setTimeout(fit, 60);
   setTimeout(fit, 600);
 })();
