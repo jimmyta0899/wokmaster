@@ -375,7 +375,7 @@
   function go(path, btn){
     markNav(btn);
     startBoot();
-    if (!frame.src) {
+    if (!frame.getAttribute('src')) {
       frame.src = APP.replace(/\/$/,'') + '/#' + path;
     } else {
       frame.contentWindow.location.hash = path;
