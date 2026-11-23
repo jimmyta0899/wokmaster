@@ -338,6 +338,9 @@
   <div class="meta">
     <code id="metaSrc">jimmyta0899.github.io/wokmaster</code><br>
     同域 iframe，登录态共享。
+    <div id="debug" style="margin-top:10px;padding:8px;background:rgba(0,0,0,0.5);border-radius:6px;font-size:10px;color:#0f0;font-family:monospace">
+      iframe src: <span id="debugSrc">checking...</span>
+    </div>
   </div>
 </aside>
 
@@ -485,6 +488,12 @@
   // 不自动计时：等用户点菜单再 startTimer
   setTimeout(fit, 60);
   setTimeout(fit, 600);
+  // Debug: show iframe src
+  setInterval(function(){
+    var f = document.getElementById('app');
+    var src = f.getAttribute('src');
+    document.getElementById('debugSrc').textContent = src ? src : '(empty)';
+  }, 500);
 })();
 </script>
 </body>
