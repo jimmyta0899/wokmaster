@@ -129474,7 +129474,7 @@ this.w=A.cM(B.be,new A.aZ7(this,a))},
 K(a){var s,r=this,q=null,p=r.d===0&&r.e!=null,o=r.gakh(),n=A.c([new A.P3(r.e,r.gawQ(r),o,q),B.u0,B.X0,new A.R5(r.f,r.r,r.gatP(),q),B.wy,B.MQ],t.Og)
 o=p?A.fd(q,q,q,B.xi,q,q,o,q,q,q,A.l("Back to the menu","\u8fd4\u56de\u4e0a\u7ea7\u83dc\u5355"),q):q
 if(p){s=r.e
-s=s.b+" "+s.c}else s=r.d===2?"Community":"WokMaster"
+s=s.b+" "+s.c}else s=r.d===2?"Community":"WokMaster v2.1"
 s=A.k(s,q,q,q,q,q,q)
 s=A.ji(A.c([new A.Vq(new A.aZb(),q)],t.p),q,q,!0,!1,q,q,1,q,q,q,!1,q,!1,q,q,o,q,!0,q,q,q,q,q,s,q,q,q,1,q,!0)
 o=r.d
