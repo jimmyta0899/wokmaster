@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="/wokmaster/__preview/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="WokMaster — 1,200+ English-language Chinese recipes with exact quantities, per-step timings and equipment lists, plus a fridge matcher that turns what you already have into dinner.">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="theme-color" content="#B4553F">
+
+  <meta property="og:site_name" content="WokMaster">
+  <meta property="og:title" content="WokMaster — Chinese cooking that works in your kitchen">
+  <meta property="og:description" content="1,200+ Chinese recipes with exact quantities, per-step timings and equipment lists. Find dinner from what is already in your fridge.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://jimmyta0899.github.io/wokmaster/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="WokMaster — Chinese cooking that works in your kitchen">
+  <meta name="twitter:description" content="1,200+ Chinese recipes with exact quantities and per-step timings.">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="WokMaster">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>WokMaster — Chinese cooking that works in your kitchen</title>
+  <link rel="manifest" href="manifest.json">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://jimmyta0899.github.io/wokmaster/#organization",
+        "name": "WokMaster",
+        "alternateName": "WokMaster Chinese Cooking",
+        "url": "https://jimmyta0899.github.io/wokmaster/",
+        "description": "WokMaster is an English-first Chinese cooking app: 1,200+ recipes with exact quantities, per-step timings, equipment lists and a fridge matcher."
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://jimmyta0899.github.io/wokmaster/#website",
+        "url": "https://jimmyta0899.github.io/wokmaster/",
+        "name": "WokMaster",
+        "inLanguage": "en-US",
+        "publisher": { "@id": "https://jimmyta0899.github.io/wokmaster/#organization" },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://jimmyta0899.github.io/wokmaster/#/search?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    html, body { margin: 0; height: 100%; background: #FFF9F5; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif; color: #3B2B24; }
+    #boot { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 16px; padding: 32px;
+            text-align: center; background: #FFF9F5; }
+    #boot .logo { font-size: 27px; font-weight: 700; letter-spacing: .2px; }
+    #boot .logo em { color: #B4553F; font-style: normal; }
+    #boot .spin { width: 22px; height: 22px; border: 2.5px solid #F0D8CE;
+                  border-top-color: #B4553F; border-radius: 50%; animation: sp .8s linear infinite; }
+    @keyframes sp { to { transform: rotate(360deg); } }
+    #boot .msg { font-size: 14px; line-height: 1.7; color: #7A655C; max-width: 330px; }
+    #boot .msg small { font-size: 12.5px; opacity: .75; }
+    #boot .hint { display: none; font-size: 13px; line-height: 1.75; color: #8A6A5F; max-width: 340px; }
+    #boot .hint b { color: #3B2B24; }
+    #boot .hint a { display: inline-block; margin-top: 10px; padding: 9px 18px; border-radius: 999px;
+                    background: #B4553F; color: #fff; text-decoration: none; font-weight: 600; }
+    #boot.late .spin { opacity: .35; }
+    #boot.late .hint { display: block; }
+    #boot.fail .spin { display: none; }
+    #boot.fail .msg { display: none; }
+    #boot.fail .hint { display: block; }
+  </style>
+</head>
+<body>
+  <div id="boot">
+    <div class="logo">Wok<em>Master</em></div>
+    <div class="spin"></div>
+    <div class="msg">
+      Loading your kitchen…<br>
+      <small>正在加载，请稍候</small>
+    </div>
+    <div class="hint" id="bootHint">
+      <b>Still not loading?</b><br>
+      This preview needs WebGL and WebAssembly. If you see a blank screen inside an
+      in-app preview panel, open the link in Chrome, Edge or Safari instead.<br>
+      <a href="./" onclick="location.reload(true);return false;">Reload / 重新加载</a>
+    </div>
+  </div>
+
+  <script>
+    // Self-heal: an old Flutter service worker can serve a stale main.dart.js
+    // against the new index.html, which shows up as a permanently blank page.
+    (function () {
+      if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return;
+      navigator.serviceWorker.getRegistrations()
+        .then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })
+        .then(function () {
+          if (!window.caches) return;
+          return caches.keys().then(function (ks) {
+            return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+          });
+        })
+        .then(function () {
+          if (sessionStorage.getItem('wmSWCleared')) return;
+          sessionStorage.setItem('wmSWCleared', '1');
+          location.reload();
+        })
+        .catch(function () {});
+    })();
+  </script>
+
+  <script>
+    (function () {
+      var boot = document.getElementById('boot');
+      var t1 = setTimeout(function () { boot.classList.add('late'); }, 7000);
+      var t2 = setTimeout(function () { boot.classList.add('fail'); }, 22000);
+      window.__wmBootDone = function () {
+        clearTimeout(t1); clearTimeout(t2);
+        if (boot && boot.parentNode) boot.parentNode.removeChild(boot);
+      };
+      window.__wmBootFail = function (reason) {
+        clearTimeout(t1); clearTimeout(t2);
+        if (!boot) return;
+        boot.classList.add('fail');
+        var h = document.getElementById('bootHint');
+        if (h && reason) h.insertAdjacentHTML('afterbegin', '<b>Renderer error:</b> ' + reason + '<br><br>');
+      };
+    })();
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
