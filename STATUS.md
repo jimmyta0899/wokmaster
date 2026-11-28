@@ -1200,4 +1200,53 @@ fatal: fetch-pack: invalid index-pack output
 - 6 条 10 分钟定时轮询已重建并全部 ACTIVE（每小时 0/10/20/30/40/50 分），工作目录与专家不变，提示词已写入本授权。
 - 下一轮按 INBOX v8 的 P2-4（collections / folders sharing）推进，不要因为旧红线 STOP。
 
+## P2-4 菜谱集/文件夹分享 — 实施完成（2026-11-28，INBOX v8）
+
+### 状态：源码已落地并验证，等 Muse REVIEW
+
+**重要说明**：本轮源码在 19:37–19:50 已由自动化轮询实施完成，但因 6 条定时任务
+被系统清空（今天第 3 次），STATUS 一度没回填、没 push，Muse 看不到产出。
+20:37 由主会话核对产物完整后补推。不是新做的，是把已完成的成果补报上来。
+
+### 改了什么（源码工作区 web_preview）
+- 新增 `lib/data/models/recipe_collection.dart`：集合实体 + 菜谱快照条目，
+  fromJson/toJson/copyWith。
+- 新增 `lib/core/services/collection_store.dart`：SharedPreferences CRUD，
+  key=`wm.collections.v1`；重复 slug 去重、读写吞异常。
+- 新增 `lib/core/services/share_urls.dart`：纯 Dart URL 拼接（VM 单测可跑），
+  `ShareService.collectionUrl(id)` → `${appRoot}#/collection/<id>`；
+  `ShareSheet` 加 `ShareKind.collection` 工厂与标题分支。
+- 新增三页：`collections_page.dart`（列表/新建/空态）、`collection_page.dart`
+  （查看/编辑/移除/分享/删除/失效诚实提示）、`add_to_collection_sheet.dart`
+  （详情页存菜进集合）。
+- `app_router.dart`：加 `/collections`、`/collection/:id`，后者进免登录白名单。
+- `profile_page.dart` 加「My cookbooks」入口；`recipe_detail_page.dart` 加
+  「Save to a cookbook」按钮。
+
+### 验证（20:37 主会话亲自复核，非只信 archive 自评）
+- `flutter test` 全量：**35/35 通过**（既有 24 + 存储 8 + 分享 3），
+  其中 collection 两项单独复跑 11/11。
+- 分享面板 `ShareKind.collection` 工厂分支、profile/详情页入口：代码接线已核对。
+- archive 记录上一轮还做了 release 构建成功 + 浏览器 deep-link 端到端实测
+  （证据路径见 archive 第 7 节）。
+
+### 诚实边界
+- 集合数据存本机 SharedPreferences：同一浏览器内 deep-link 分享能看到内容；
+  跨设备打开同一 id 显示「link not available on this device」，不伪造。
+- 跨设备共享需 Supabase `collections` 表，DDL 已写进 archive 第 5 节，
+  **本环境无凭证、未执行、不声称线上可用**。
+- demo 树未同步本轮成果：demo 本来就没跟进 P2-1/2/3（精简 demo），
+  临门一脚做大同步会引入不一致风险，INBOX v8 验收只针对 web_preview 源码。
+  如 Muse 要求 demo 也同步，请明确写进 REVIEW，下轮补。
+- 未部署、未动 gh-pages。
+
+### 产出文件
+- 源码改动在 web_preview（非 git 树）。
+- 记录：`archive/2026-11-28_P2-4-collections.md`（完整复现/方案/验收/边界）。
+- ZIP 无新产出，manifest.md 不变。R2 无凭证跳过，未伪造上传。
+
+### 等 Muse
+- 请对 P2-4 出 REVIEW。若认可「本地集合 + Supabase DDL 备而不用」的取舍，
+  下一项请 INBOX v9 派发。
+
 
