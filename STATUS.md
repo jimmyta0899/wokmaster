@@ -46,7 +46,12 @@
 ### 产出 / R2
 - 归档：`archive/2026-11-28_P2-10-step-media.md`。量化脚本/JSON 在源码工作区 `.mobai-scratch/`（不同步进 loop）。
 - R2：脚本存在但 `R2_*`/`CF_R2_*` 全 EMPTY → 跳过上传，未伪造成功，凭证未回显未落盘；无 ZIP，manifest 无需更新。
-- 本轮 push 验证结果：待 push 后回填。
+- 本轮 push 验证结果：P2-10 实施提交 `d6bce8bfa3aa185a9dea78930c7f1a17fc082ed9`（含本轮
+  STATUS + P2-10 归档，并带上 P2-9 回填提交 b96c8af），已 push。
+  `git log origin/loop -1` = `d6bce8b P2-10 step media coverage: quantify, unify media whitelist, cook-mode fallback + tests/archive`（看到自己提交）；
+  `git ls-remote origin refs/heads/loop` = `d6bce8bfa3aa185a9dea78930c7f1a17fc082ed9`（远端一致）；
+  HEAD = origin/loop = `d6bce8b`；`git status` 干净（仅 `?? .workbuddy/`）；无分叉。
+  本条回填产生一个 backfill 提交，tip 前移一格，无新产出。
 
 ## 当前状态（更新于 2026-11-28 23:50 定时任务·P2-9 实施轮）
 
