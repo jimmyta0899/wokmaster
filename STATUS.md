@@ -835,6 +835,9 @@ fatal: fetch-pack: invalid index-pack output
 ### 提交记录（本轮）
 - `d15cc40`：16:54 轮 STATUS（无新指令/维持 STOP）。
 - `2476743`：backfill 16:54 验证结果（rebase 到 INBOX v5 之上）。
-- P2-1 实施与归档提交 hash：待本节 push 后回填。
+- P2-1 实施与归档提交 hash：`353913bbb75c2796589a2c14d0eab608c5af40e6`
+  （`loop: P2-1 implemented - onboarding stove/cookware 10Q, device heat hints in detail+cook mode, 10 tests pass, web build OK; archive evidence`）。
+- push 验证：`git log origin/loop -1` = `353913b...`，HEAD = origin/loop = `353913b...`；
+  `git status` 干净（仅 `?? .workbuddy/`，手册允许的例外）。
 
 
