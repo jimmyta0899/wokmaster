@@ -4,64 +4,69 @@
 
 ## 当前状态
 
-- 任务：v1 / P0 登录墙修复（已按 Jimmy 真机确认「出不来」启动并完成）
-- 进度：P0 已完成，待 Muse 复核；P1 未开始
-- 返工轮次：0 / 3
+- 任务：v1 / P0 首帧性能返工（REVIEW 打回，返工第 1 轮 / 共 3 轮）
+- 进度：首帧根因已定位并修复、干净 release 重编验证通过；访客公开菜谱实测通过。
+        等 Muse 复核。P1 未开始（REVIEW 未明确通过前不动）。
+- 返工轮次：1 / 3
+- 提交 hash：见本文件末尾（push 后回填）
 
 ## 本次干了什么
 
-定位并修复登录墙根因 `No MaterialLocalizations found`：shadcn_ui 0.61.2
-的 `ShadApp.router` 底座是 WidgetsApp，Flutter 3.47 下不注入 Material 本地化，
-登录页的 Material 原生 TextField 一 build 就抛断言，整个表单变灰色 ErrorWidget
-（连锁导致按钮灰、注册/访客入口点了没反应）。
+REVIEW 打回的两条都做了：
 
-修复：`lib/app.dart` builder 里显式包一层 `Localizations`（Material + Widgets
-delegate 兜底）；`_patchTheme` 钉死 FilledButton 前景/背景。两棵代码树
-（web_preview / flutter-demo）同步，diff 一致。
+**1) 首帧 <10s（先量后改）**
+先分段实测，没猜：本地起服务 + headless Chrome CDP 打点，看到唯一外部运行时
+请求是 `fonts.gstatic.com` 的 Roboto 回退字体。Flutter 引擎在字体清单找不到
+Roboto 时硬编码去 gstatic 拉字，不受 `canvasKitBaseUrl` 影响（配
+`fontFallbackBaseUrl` 实测无效，已回滚）。gstatic 在中国大陆不可达 → 线上
+首帧卡到超时，这就是 20–30s 的根因。
 
-按红线做了 `flutter clean` 全量 release 重编（避免增量编译产物不更新顽疾），
-在真实浏览器上逐项验证 P0 登录链路。
+只改一处：`pubspec.yaml` 新增自托管 `Roboto` 字族（Flutter SDK 自带字体，
+Apache 2.0）。引擎发现 App 已声明 Roboto 就不再注册 gstatic URL。
+`flutter clean` 全量 release 重编（95.3s）后验证：gstatic 请求 = 0，
+本地 Roboto 加载 16ms，bootDone 777ms，FCP 52ms，无报错。
+
+**2) 访客点进公开菜谱实测**
+真实浏览器（未登录）打开 `#/recipe/ants-climbing-tree`（Supabase anon 取到的
+真实 slug）：URL 停在菜谱页没被拦回登录，页面标题变为菜谱标题，截图可见完整
+菜谱（标题/时长/份量/标签/视频/过敏原/配料），只读提示条正常，0 报错。
+（从私有页 /profile 被拦后进 guest 入口会被再次拦回，属预期，非 bug。）
 
 ## 产出文件
 
-- 源码：`wokmaster_source/web_preview/lib/app.dart`、`wokmaster_source/flutter-demo/lib/app.dart`
+- 源码：`wokmaster_source/web_preview/pubspec.yaml`（+ Roboto 字族）、
+  `wokmaster_source/web_preview/assets/fonts/Roboto-Regular.ttf`、
+  `Roboto-LICENSE.txt`
 - 干净 release 产物：`wokmaster_source/web_preview/build/web/`
-- 详细记录：`archive/2026-11-28_P0-login-wall-fix.md`（含根因、修复、排除的错误路径、验证结论）
+- 详细记录：`archive/2026-11-28_P0-rework-round1-firstpaint.md`
+  （根因、分段数据、排除的错误路径、验证结论、截图位置）
+- ZIP 清单：`archive/manifest.md`（本轮无新 ZIP）
 
-## 自评（对照 PLAN.md P0 验收单）
+## 自评（对照 PLAN.md P0 验收单 + REVIEW 打回项）
 
-- [x] 登录页邮箱/密码框正常显示可输入；Sign in 砖红底白字可点；登录成功进首页
-- [x] 注册页同样正常（邮箱/密码/邀请码三框 + Create account 可点）
-- [x] "Keep reading without an account / 先不登录继续看" 正常渲染可点；
-      公开分享落地路由免登录白名单在代码里已确认
-- [ ] 首帧 <10 秒：**未达标**，release 冷启动约 20–30 秒，既有性能债，
-      不在本次登录墙修复范围，建议单独立项
+- [x] 登录页邮箱/密码框正常显示可输入；Sign in 可点；登录成功进首页（上轮通过，未回归）
+- [x] 注册页三框 + Create account 可点（上轮通过，未回归）
+- [x] "Keep reading without an account" 正常渲染可点（上轮通过，本轮复测仍可点）
+- [x] 访客点进公开菜谱能正常看（本轮新增实测，真实浏览器截图）
+- [x] 首帧 <10s 的根因已消除：本机干净构建 bootDone 777ms、gstatic 请求归零；
+      线上 20–30s 需部署后真机复测（本环境不部署）
+- [ ] 线上真机首帧 <10s：**未验证**（部署后 Jimmy 复核，本轮红线不部署）
 
-结论：P0 登录墙本体 3/3 通过，性能那条挂起。可进 P1。
+## 卡住的地方 / 挂起
 
-## 卡住的地方
-
-- 首帧性能（<10s）未做，需 Muse 决定是否单列任务。
-- R2 归档：本环境 R2_* 凭证为空、boto3 未装，本次也无新归档包，未上传；
-  凭证就绪后可补。不影响 P0 验收。
+- 首帧线上数字：根因（gstatic 不可达）已确定性消除，但本机测不到线上网络，
+  真实秒数待部署后复测。不写"已完成"。
+- 节流模拟（200KB/s）下测量 harness 未稳定捕获 bootDone（stale Chrome 干扰），
+  故不声称节流下的具体秒数。
+- 少数中文字符豆腐块（NotoSansSC 子集覆盖不全）：既有问题，建议单列，不在本轮范围。
+- R2 归档：本环境 `R2_*` 凭证全空、boto3 未装，**跳过，未上传**（不伪造成功）；
+  凭证就绪后可补。
+- 真机验证：需部署后 Jimmy 手机复核。
 
 ## 上线状态
 
-**未部署、未上线。** gh-pages 主站未动，等 Jimmy 点头。
+**未部署、未上线。** gh-pages 主站未动，等 Muse 复核 + Jimmy 点头。
 
-## 运行环境说明（权限模式，需 Muse 知悉）
+## 提交记录
 
-手册 v3 要求定时任务跑在 `permissions.defaultMode = auto`（保留安全边界，
-不用 bypassPermissions）。但**实际运行环境与手册假设不符**：
-
-- 本会话跑在 **WorkBuddy 桌面端 5.12.1**，权限开关是输入框左下的
-  「允许完全访问」两极开关（开/关），**没有 auto 档**——下拉里只有
-  「当前权限为允许完全访问 / 允许完全访问」这一项。
-- 已在 `~/.codebuddy/settings.json`（用户级 CLI 配置）追加
-  `"permissions":{"defaultMode":"auto"}`，但那是 CLI 配置，对桌面端开关
-  不生效（重启后确认：`defaultMode=auto` 读回正确，输入框仍无 `auto mode on` 提示）。
-- 结论：**桌面端无法提供 auto**。Jimmy 已当场拍板：保持「允许完全访问」开启
-  （= bypass），让每 10 分钟的闭环能自动跑、不被逐条确认卡死；
-  并把这条环境偏差记在这里，请 Muse 复核时按桌面端现实裁定，不要按 CLI 手册判违规。
-- 补偿约束（已写进 6 条定时任务 prompt）：不部署、不上线、不 force push、
-  不改 PLAN/REVIEW、REVIEW 没通过不进 P1——用流程红线替代 auto 的安全边界。
+- 本轮提交 hash：（push 后回填，见下方）
