@@ -7,11 +7,10 @@
 - 任务：v1 / P0 首帧性能返工 —— **Muse 已判 PASS（有条件），P0 四项验收全过**。
 - 进度：首帧根因已消除、干净 release 重编验证通过；访客公开菜谱实测通过。
         P1 不自动开始，等 Jimmy 确认下一阶段再动；部署/真机复测须 Jimmy 点头。
-- 本轮（2026-11-28 15:51 定时任务）：开局 REVIEW 仍为打回第 1 轮（两项已完成），INBOX v1。
-        本轮 git pull 挂起被终止；ls-remote 初次显示远程 tip = 本地 HEAD（89ce1f4）无新内容。
-        提交 STATUS 后 push 被拒（remote contains work you do not have）——Muse 期间推来新
-        REVIEW（commit 21e24dc）：**P0 PASS（有条件）**。浅 fetch 取回、rebase 后据新结论
-        改写本条 STATUS。P1 仍未开始。详见文末"本轮轮询记录"。
+- 本轮（2026-11-28 16:06 定时任务）：INBOX v1 未变，REVIEW 仍为 P0 PASS（有条件，21e24dc），
+        远程 tip = 本地 HEAD（5399b0c）无新指令。无新进度，按手册只推一条"进行中/等确认"
+        STATUS；不进 P1、不部署。git pull 挂起 5m44s 后终止，改用 ls-remote 核验远程状态。
+        详见文末"本轮轮询记录（2026-11-28 16:06 定时任务）"。
 - 返工轮次：1 / 3（P0 已通过，返工结束）
 - 工作提交 hash：`9a92e28a0a97b3ad6b27a3a471ac066e7ad19e58`
   （`loop: P0 rework r1 - fix first-paint gstatic font hang, guest recipe verified`）
@@ -302,5 +301,54 @@ fatal: fetch-pack: invalid index-pack output
 - 本轮工作提交 hash：`3833e4dad0c234d715e45bda10efb7cc18cb2a87`
 - 注：本条验证结果回填后会产生一个 backfill 提交，tip 会前移一格；backfill 提交只是
   记录验证结果，无新增产出或任务进度。
+
+## 本轮轮询记录（2026-11-28 16:06 定时任务）
+
+### 判断
+- INBOX.md 版本 v1，与 STATUS 上次处理版本一致 → 无新任务。
+- REVIEW.md 结论仍为 P0 PASS（有条件，commit 21e24dc）：P0 四项验收全过。
+  明确写着"P1 不自动开始，等 Jimmy 确认下一阶段再动""部署/真机复测须 Jimmy 点头"。
+  → 本轮不进 P1、不部署。
+- 无新进度：按手册第 5 章，本轮只推一条"进行中/等确认"STATUS，不重复干活、不空提交。
+- 权限模式自查：本轮所有 git 命令均直接执行，未出现等待确认的弹窗/挂起，判断为 auto 模式正常。
+
+### 远程状态（ls-remote 轻量核验成功）
+- `git ls-remote origin refs/heads/loop` =
+  `5399b0c2968d115e5f11d34733b07c8c7b319481` = 本地 HEAD = origin/loop 缓存
+  → 远程 loop 分支无新提交，Muse 未推新的 REVIEW/INBOX。
+- 本轮判断建立在最新远程状态上，不存在"看不到新指令"的盲区。
+
+### 本轮做了什么
+- 无代码改动。源码工作区 `wokmaster_source/web_preview` 存在但未触碰
+  （P0 已通过，P1 待 Jimmy 点头，无新任务需动手）。
+- R2 归档：脚本 `E:\data\2026-10-15-11-35-18\holia_import\upload_to_r2.py` 存在，
+  凭证只从环境变量读取（不回显不落盘）。本环境 `R2_ACCOUNT_ID / R2_ACCESS_KEY_ID /
+  R2_SECRET_ACCESS_KEY / R2_BUCKET / R2_ENDPOINT` 全空，且 boto3 未安装
+  （`ModuleNotFoundError: No module named 'boto3'`）→ **跳过，未上传**（不伪造成功）。
+- 本轮无新对话 md / ZIP 产出：`archive/` 现有两份 md 与 `manifest.md` 内容不变，不做空同步。
+- 未部署、未合并 gh-pages、未上线，红线守住。
+
+### 卡住的地方 / 报错原文（照抄，未改写）
+`git pull` 本轮挂起约 5m44s、无任何输出，按手册"同一假设试两次没用就停下"及超时阈值
+终止，未重试：
+```
+（无输出，进程挂起；stdout / stderr 均为空，达到阈值后终止）
+```
+注：连续第 5 轮 pull 异常（前四轮为 schannel RPC failed / early EOF 或挂起）。
+`git ls-remote` 正常返回，远程可读；仅 pull 的 fetch-pack 传包通道不稳定。
+REVIEW 已授权 pull 失败时改用轻量核验，本轮照此执行。
+
+### 试过什么
+1. `git pull` —— 挂起约 5m44s 无输出，终止（本轮 1 次，不重试）。
+2. `git ls-remote origin refs/heads/loop` —— 成功，确认远程 tip 无变化。
+
+### 需要什么
+- **Jimmy 确认是否进入 P1**（REVIEW 条件：P1 不自动开始）。
+- **部署 / 真机首帧复测须 Jimmy 点头**（P0 通过不等于可上线，线上 <10s 未真机复测）。
+- R2 凭证与 boto3 需 Jimmy 补齐，届时补传归档。
+- 远程 loop 分支 HTTPS fetch-pack 通道不稳定（连续第 5 轮 pull 异常），push 通道此前正常。
+
+### 本轮 push 验证结果
+- 待 push 后回填。
 
 
