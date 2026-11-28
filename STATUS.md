@@ -1067,6 +1067,14 @@ fatal: fetch-pack: invalid index-pack output
 - R2 凭证与 boto3 需 Jimmy 补齐。
 
 ### 本轮 push 验证结果
-- 待回填（push 后写入，含提交 hash 与 `git log origin/loop -1` / `git status` 结果）。
+- push 成功：`8e9f3f0..f0e0754  loop -> loop`（fast-forward，无 non-fast-forward、无 force push）。
+  本次连带把 rebase 到 v6 之上的 backfill 提交 `2315531`（17:24 首段验证回填）一并推上。
+- `git log origin/loop -1` =
+  `f0e075469c99a37c3d8aee3478a4b4f4faccaccc loop: P2-2 nutrition standard implemented - Recipe nutrition fields, detail-page nutrition card (source-first, estimated fallback), 10 tests pass, web build OK, FCP 3444ms; archive evidence`
+- HEAD = origin/loop = `f0e075469c99a37c3d8aee3478a4b4f4faccaccc`（tip 一致）。
+- `git ls-remote origin refs/heads/loop` 复核 = `f0e0754...`（远端 tip 一致）。
+- `git status` 干净：仅 `?? .workbuddy/`（本地运行时目录，手册允许的例外）。
+- 本轮工作提交 hash：`f0e075469c99a37c3d8aee3478a4b4f4faccaccc`。
+- 注：本条验证结果回填后会产生一个 backfill 提交，tip 前移一格；backfill 只记录验证结果，无新增产出或任务进度。
 
 
