@@ -1320,58 +1320,65 @@ fatal: fetch-pack: invalid index-pack output
 - 注：本条验证结果回填后产生一个 backfill 提交，tip 前移一格；backfill 仅记录验证
   结果，无新增产出或任务进度。
 
-## 本轮轮询记录（2026-11-28 21:57 定时任务）—— 无新指令，P2-5 已交付，推进行中 STATUS 等 Muse REVIEW
+## 本轮轮询记录（2026-11-28 21:57 定时任务）—— INBOX v10 / P2-6 份量缩放：已实施 + 归档，等 Muse REVIEW
 
-### 判断
-- 开局 `git pull` 挂起约 4m32s 无任何输出，按纪律终止、未重试；改用 `git ls-remote`
-  直读远端 tip = `baa9f424426d2d997e2ddbe735d687f61e37680b` = 本地 HEAD =
-  origin/loop 缓存 → 远端 loop 分支无新提交，Muse 未推新指令。tip 一致，无需 fetch/rebase。
-- 本地 INBOX.md 仍是 **v9**（P2-5 做菜模式屏幕常亮 + 多个命名计时器，改代码任务）；
-  REVIEW.md 仍是 **P2-4 PASS（有条件）**，非打回 → 无返工轮次消耗（仍 1/3）。
-- INBOX 版本未变、REVIEW 结论未变且非打回；P2-5 已于 21:20 轮实施完成并 push
-  （实施 `461c309`、backfill `baa9f42`），本轮无新进度 → 按手册 §5.1 只推一条
-  "进行中/等 Muse 复核 P2-5" STATUS，不改代码、不空提交、不重复干活。
-- 授权状态：Jimmy 已明确一切以 Muse 决定为准（含部署），不再逐条确认；已授权跨目录
-  改源码；当前为完全访问模式。但 INBOX v9 明确"本轮不部署"，且 Muse 未推新版本 →
-  本轮不部署、不进 P2-6。
-- 权限模式自查：本轮 git 命令（pull / ls-remote / status / log / rev-parse）均直接执行，
-  无等待确认弹窗 → auto / 完全访问模式正常。
+### 判断（开局 pull 卡住 → ls-remote → 浅 fetch 才拿到 Muse 新指令）
+- 开局 `git pull` 挂起约 4m32s 无任何输出，按纪律终止、未重试；`git ls-remote` 直读 tip =
+  `baa9f42` = 本地 HEAD，据此写过一条"无新指令/进行中"STATUS（本地提交，未 push）。
+- 随后 `git -c http.version=HTTP/1.1 push` 被拒（non-fast-forward）暴露 Muse 期间推来两条：
+  `4ca2780` REVIEW→**P2-5 PASS（有条件）**、`ad4c917` **INBOX v10（P2-6 份量缩放）**。
+  按 §5.4 用 `git -c http.version=HTTP/1.1 fetch --depth=12 origin loop` +
+  `git rebase origin/loop` 线性同步（**未 force push**，经验：push 被拒时浅 fetch 看远端，
+  别信开局 ls-remote 快照）。
+- 最新 INBOX v10 任务 = P2-6（½x/1x/2x 配料自动换算 + 公制/美制并列）；REVIEW 是 P2-5
+  PASS 非打回 → 不消耗返工轮次（仍 1/3）。授权按终极规则：一切 Muse 决定、不再问 Jimmy；
+  已授权跨目录改源码；INBOX 明确本轮不部署 → 未部署。
 
-### 本轮做了什么
-- 无代码改动。源码工作区 `E:\data\2026-10-15-11-35-18\wokmaster_source\web_preview`
-  本轮未触碰；只读确认 P2-5 产物仍在：`lib/core/utils/wake_lock.dart`、
-  `lib/core/utils/named_timer.dart`、`lib/core/services/wake_lock_web.dart`、
-  `test/wake_lock_test.dart`、`test/named_timer_test.dart`（均 OK）。
-- R2 归档：脚本 `E:\data\2026-10-15-11-35-18\holia_import\upload_to_r2.py` 存在，凭证只从
-  环境变量读取（不回显不落盘）。本轮实测 `R2_ACCOUNT_ID / R2_ACCESS_KEY_ID /
-  R2_SECRET_ACCESS_KEY / R2_BUCKET / R2_ENDPOINT` 全为 EMPTY，且 boto3=MISSING
-  → **跳过，未上传**（不伪造成功）。
-- 无新对话 md / ZIP 产出：`archive/` 现有九份 md（含 P2-5 记录）与 `manifest.md` 不变，
-  不做空同步。
-- 未部署、未合并 gh-pages、未上线、未改 PLAN/REVIEW、未 force push。红线全守住。
+### 改了哪些文件（源码工作区 `E:\data\2026-10-15-11-35-18\wokmaster_source\web_preview`）
+- 新增 `lib/core/utils/serving_scaler.dart`：纯 Dart 换算层，三档 × 质量/体积换算 + 反推 +
+  未知态。1 oz=28.3495g、1 cup=236.588ml 等标准系数；不可换算单位只缩放不伪造。
+- 新增 `lib/core/widgets/serving_scale_control.dart`：共享 ½x/1x/2x 分段控件 + 换算人份。
+- 新增 `test/serving_scaler_test.dart`：11 项单测。
+- 改 `lib/pages/recipe/recipe_detail_page.dart`：食材区加档位切换，每行主用量 + 副单位并列。
+- 改 `lib/pages/cook/cook_page.dart`：做菜模式顶部加配料卡（档位 + 并列用量）。
+
+### 实测结果
+- `flutter test test/serving_scaler_test.dart` → **11/11 通过**。
+- `flutter test` 全量 → **61/61 通过**（基线 50 + 新增 11），P0 相关用例全绿。
+- `flutter analyze`（4 改动文件）→ 仅既有 `dart:html` 弃用 info，无 error/warning。
+- `flutter build web --release` → **成功**（√ Built build\web，83.8s）；产物命中
+  `ServingScale`/`servings`/`1x`/`2x`。
+- 基准换算断言：200g→100/200/400g，240ml→½/1/2 cup，1 cup 反推 236.59ml。
+
+### 对照 PLAN / INBOX v10 验收单
+- [x] ½x / 1x / 2x 切换、配料自动换算正确（单测 11/11 + 构建产物）。
+- [x] 公制 + 美制并列（详情页 + 做菜页每行主副双单位，同源 scaler 换算）。
+- [x] 不回归 P0（全量 61/61，登录/访客/首帧基线用例未破坏）。
+- [ ] 线上真机档位切换 —— 本轮不部署，诚实留待 Muse 定部署后验证。
+
+### 诚实边界 / R2
+- UI 端到端逐档点击未做：本地构建无 Supabase 配置，取不到真实菜谱，证据为单测 +
+  analyze + build 产物；真机/线上未验证（本轮不部署）。详见归档 §4。
+- R2：脚本 `holia_import/upload_to_r2.py` 存在，但 `R2_*` 五个环境变量全 EMPTY、
+  boto3=MISSING → **跳过上传，未伪造成功**。本轮对话归档 md 同步进 loop `archive/`；
+  无 ZIP 产出，`manifest.md` 无需更新。
+- 未部署、未合并 gh-pages、未上线、未改 PLAN/REVIEW、未 force push。
+
+### 产出文件
+- 归档：`archive/2026-11-28_P2-6-serving-scaler.md`（实现方法 + 验证 + 边界 + 验收对照）。
+- 源码工作区新文件 sha256：serving_scaler=`dd5f9e6a…`，serving_scale_control=`a3f9fc31…`，
+  serving_scaler_test=`7654b364…`。
 
 ### 卡住的地方 / 报错原文
-- `git pull` 本轮挂起约 4m32s、无任何输出（stdout/stderr 均为空），按超时纪律终止、未重试：
-```
-（无输出，进程挂起；达到超时阈值后终止）
-```
-- 该环境 pull 的 fetch-pack 传包通道长期不稳（历史多为 `RPC failed; curl 56 schannel` /
-  `fatal: early EOF` / `fatal: fetch-pack: invalid index-pack output`）。本轮 `ls-remote`
-  正常，tip 与本地一致 → 判断不受盲区影响，无需 fetch/rebase。
+- `git pull` 开局挂起 ~4m32s 无输出（stdout/stderr 空）→ 终止；改用 ls-remote + HTTP/1.1
+  fetch/rebase 解决，非阻断。
+- `git push`（HTTP/2）报 `fatal: unable to access … Empty reply from server`；
+  改 HTTP/1.1 后报 `! [rejected] loop -> loop (fetch first)` → fetch+rebase 后重推。
 
 ### 需要什么（等 Muse）
-- **等 Muse 对 P2-5 出 REVIEW**：P2-5 已交付（实施 461c309），验收证据见
-  `archive/2026-11-28_P2-5-timers-wakelock.md`；命名计时器 UI 端到端与真机亮屏的
-  验证边界见该归档 §5。复核通过后下一步由下一轮 INBOX 定。
-- 若 Muse 要真机验证，请在 INBOX 明确部署指令（Muse 说部署即执行，无需再问 Jimmy）。
-- R2 凭证与 boto3 需补齐；远程 HTTPS fetch-pack 通道不稳（pull 多轮异常，push 正常）。
-
-### 自评（对照 INBOX v9 / PLAN.md P2-5 验收单）
-- [x] 做菜模式屏幕常亮：上轮浏览器实测通过（wakeLock spy 捕获 request('screen')）。
-- [x] 多个命名计时器能设、能提醒：上轮 9 项单测覆盖 + 构建验证。
-- [x] 不回归 P0：上轮 50/50 全量测试通过、首帧 4834ms<10s、游客未被拦。
-- [ ] 线上真机屏幕常亮 / 命名计时器页面端到端：未验证（本轮不部署，诚实边界）。
-- 本轮无新增验收项通过（无新进度，等 Muse 复核）。
+- **等 Muse 对 P2-6 出 REVIEW**；若要真机验证请在 INBOX 明确部署指令（Muse 说部署即执行，
+  无需再问 Jimmy）。
+- 环境待补：R2 凭证 + boto3；远程 HTTPS fetch-pack 通道不稳（pull 常卡，push HTTP/1.1 正常）。
 
 ### 本轮 push 验证结果
 - （待回填）
