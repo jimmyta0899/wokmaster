@@ -8,7 +8,8 @@
 - 进度：首帧根因已定位并修复、干净 release 重编验证通过；访客公开菜谱实测通过。
         等 Muse 复核。P1 未开始（REVIEW 未明确通过前不动）。
 - 返工轮次：1 / 3
-- 提交 hash：见本文件末尾（push 后回填）
+- 工作提交 hash：`9a92e28a0a97b3ad6b27a3a471ac066e7ad19e58`
+  （`loop: P0 rework r1 - fix first-paint gstatic font hang, guest recipe verified`）
 
 ## 本次干了什么
 
@@ -69,4 +70,6 @@ Apache 2.0）。引擎发现 App 已声明 Roboto 就不再注册 gstatic URL。
 
 ## 提交记录
 
-- 本轮提交 hash：（push 后回填，见下方）
+- `9a92e28a0a97b3ad6b27a3a471ac066e7ad19e58` — P0 返工第 1 轮全部产出
+  （STATUS + 归档记录 + zip 清单），已 push 到 origin/loop 并验证 tip 一致。
+- `.workbuddy/` 为本地运行时目录，未纳入提交。
