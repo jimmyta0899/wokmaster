@@ -954,4 +954,54 @@ fatal: fetch-pack: invalid index-pack output
 - 本轮工作提交 hash：`b26b22f901bc4be03e82279fb41a1bd63478b075`。
 - 注：本条验证结果回填后会产生一个 backfill 提交，tip 前移一格；backfill 只记录验证结果，无新增产出或任务进度。
 
+## 本轮轮询记录（2026-11-28 17:24 定时任务）—— 无新指令，P2-1 已交付，只推进行中 STATUS 等 Muse 复核
+
+### 判断
+- `git ls-remote origin refs/heads/loop` = `dad4b60ee3c9148723fb3568de7a5811529bcab5`
+  = 本地 HEAD = origin/loop 缓存 → 远端 loop 分支无新提交，Muse 未推新指令。
+- 本地 INBOX.md 仍是 **v5**（P2-1 灶具/锅具适配，改代码任务，Jimmy 已授权跨目录改源码）；
+  REVIEW.md 仍是 **P1 核查 PASS**（下一步 P2，先做 P2-1）。INBOX 版本未变、
+  REVIEW 结论未变且非打回 → 无新任务版本、无返工轮次消耗（返工仍 1/3）。
+- P2-1 已于 17:13 实施完成并 push（`353913b`），17:15 / 17:19 轮已推进行中 STATUS
+  （`e568bbc`、`b26b22f`）；本轮无新进度 → 按手册 §2 第 4 步 / §5.1，只推一条
+  "进行中/等 Muse 复核 P2-1"STATUS，不改代码、不空提交、不重复干活。
+- 权限模式自查：本轮 git 命令（ls-remote / status / log / rev-parse）均直接执行成功，
+  无等待确认弹窗/挂起 → auto 模式正常，未空转烧积分。
+- pull 纪律：该环境 `git pull` 已连续多轮 `fatal: fetch-pack: invalid index-pack output`，
+  同一方法试过两次以上无效，按 §4.3 不再重试；改用 `git ls-remote` 只探 tip
+  （沿用 memory 里验证过的轻量通道），本地 HEAD 与远端一致，判断不受盲区影响。
+
+### 本轮做了什么
+- 无代码改动。源码工作区 `E:\data\2026-10-15-11-35-18\wokmaster_source\web_preview`
+  本轮未触碰（P2-1 上轮已交付，无新任务需动手）；只读确认上轮产物仍在：
+  `lib/core/utils/device_heat_hint.dart`、`test/device_heat_hint_test.dart`、
+  `test/device_hint_card_test.dart`（三者均 OK，`git status` 干净）。
+- R2 归档：脚本 `E:\data\2026-10-15-11-35-18\holia_import\upload_to_r2.py` 存在，凭证只从环境变量
+  读取（不回显不落盘）。本轮实测 `R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY /
+  R2_BUCKET / R2_ENDPOINT` 全为 EMPTY，且 boto3 未装（boto3=MISSING）→ **跳过，未上传**
+  （不伪造成功）。
+- 无新对话 md / ZIP 产出：`archive/` 现有六份 md（含 P2-1 记录）与 `manifest.md` 不变，
+  不做空同步。
+- 未部署、未合并 gh-pages、未上线、未改 PLAN/REVIEW、未 force push。红线全守住。
+
+### 卡住的地方 / 报错原文
+- 本轮无卡点。按 §4.3 不再重试已连续失败的 `git pull`（历史报错原文，见上轮记录：
+  `fatal: fetch-pack: invalid index-pack output`，退出码 124），改用 `ls-remote` 核验，成功。
+
+### 需要什么（等 Muse / Jimmy）
+- **等 Muse 对 P2-1 出 REVIEW**：P2-1 已交付（353913b），验收证据见
+  `archive/2026-11-28_P2-1-stove-cookware.md`；复核通过后是否进 P2-2 由下一轮 INBOX 定。
+- **部署 / 真机首帧复测须 Jimmy 本人点头**（P0 通过不等于可上线）。
+- R2 凭证与 boto3 需 Jimmy 补齐；远程 HTTPS fetch-pack 通道不稳（pull 连续多轮异常，push 正常）。
+
+### 自评（对照 INBOX v5 P2-1 验收单）
+- [x] 问卷能采集灶火/锅具并存入档案（上轮已交付）
+- [x] 步骤火候提示按设备变化，有实测证据（上轮 10 测试全过 + widget 证据）
+- [x] 不回归 P0（上轮本地 release 首帧 FCP 3492ms < 10s，0 异常）
+- [ ] 线上真机复核：**未验证**（部署属红线，须 Jimmy 点头）
+- 本轮无新增验收项通过（无新进度，等 Muse 复核）。
+
+### 本轮 push 验证结果
+- 待回填（push 后写入，含提交 hash 与 `git log origin/loop -1` / `git status` 结果）。
+
 
