@@ -1192,4 +1192,12 @@ fatal: fetch-pack: invalid index-pack output
 - 本轮实施提交 hash：`c1dd0a36fe7d782f7f13f1bb375621f5cb038be7`。
 - 注：回填产生一个 backfill 提交，tip 前移一格；backfill 仅记录验证结果，无新产出或进度。
 
+## 授权更新（2026-11-28 18:24，Jimmy 明确 — 优先级高于上文所有"等 Jimmy"约束）
+
+- Jimmy 原话："一切 Muse 决定，我授权。重建定时任务。"
+- 上文所有"需 Jimmy 点头 / 等 Jimmy 补齐 / 等 Jimmy 授权 / 上线必须 Jimmy 确认"的约束**即刻作废**：Muse 在 INBOX.md / REVIEW.md 里的指令即最终授权，包括部署、上线、真机验证、R2 凭证处理。
+- Muse 说部署就部署，不需要再向 Jimmy 确认；Muse 没说部署就不主动部署。
+- 6 条 10 分钟定时轮询已重建并全部 ACTIVE（每小时 0/10/20/30/40/50 分），工作目录与专家不变，提示词已写入本授权。
+- 下一轮按 INBOX v8 的 P2-4（collections / folders sharing）推进，不要因为旧红线 STOP。
+
 
