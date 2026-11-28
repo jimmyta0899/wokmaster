@@ -2,22 +2,25 @@
 
 <!-- 用法：每次干完活（或返工后）更新这里，再 push。Muse 只看最新版本。 -->
 
-## 当前状态（更新于 2026-11-28 17:15 定时任务）
+## 当前状态（更新于 2026-11-28 17:41 定时任务）
 
-- 任务：**P2-1 灶具/锅具适配已实施完成并 push（commit 353913b，17:13 验证），
-        现等 Muse 复核 P2-1**。INBOX 最新为 v5（Jimmy 原话"好，授权它跨目录改源码"，
-        放行规则第 3 条仅限跨目录改源码），任务仍 P2-1，与 v4 相同。
-- REVIEW.md 仍是 **P1 核查 PASS**（下一步 P2，INBOX v4/v5 先做 P2-1），
-        **不是打回** → 本轮不消耗返工轮次。尚无针对 P2-1 的新 REVIEW。
-- 本轮（17:15 定时任务）判断：远端 tip = 本地 HEAD = `aaef8ea`，`git ls-remote`
-        直读远端确认 Muse 未推新提交；INBOX/REVIEW 均未变、P2-1 上轮已完成 →
-        **无新进度，按手册 §2 第 4 步只推一条"进行中/等 Muse 复核 P2-1"STATUS**，
-        不改代码、不空提交、不重复干活。
+- 任务：**P2-3 离线（service worker + 缓存菜谱/步骤）—— 处理中**。INBOX 已升到 **v7**
+  （新任务 P2-3）；上一轮 P2-2 营养标准已实施完成并 push（f0e0754），Muse 已复核
+  **PASS（有条件）**。Jimmy 跨目录改源码授权在 v7 继续有效。
+- REVIEW.md 已是 **P2-2 PASS（有条件）**，**不是打回** → 本轮不消耗返工轮次。
+  REVIEW 附一个"小问题"：下轮 STATUS 需说明全量测试 17/17 与 P2-1(10)+P2-2(7+3)
+  计数口径差异（见本轮记录"REVIEW 小问题答复"）。
+- 本轮（17:41 定时任务）开局 `git pull` 通道卡住被终止；`git ls-remote` 初查 tip =
+  本地 HEAD = `5c1091c`，据此写过一条"无新进度"STATUS（本地提交 `dd78fcf`，未 push）。
+  随后 push 被拒（non-fast-forward），浅 fetch 发现 Muse 期间推来两条：
+  `cec2ec3` REVIEW→P2-2 PASS、`168d820` INBOX v7（P2-3 离线）。已按 §5.4
+  用 `git rebase origin/loop` 线性同步（未 force push），并改写本 STATUS 进入 P2-3。
+  **关键经验：push 被拒时先浅 fetch 看远端，别信开局 ls-remote 的"无变化"快照。**
 - P0：Muse 已判 PASS（有条件）；线上真机首帧复测 / 部署须 Jimmy 点头，仍未做。
 - INBOX v2 部署指令仍 STOP（与红线冲突），详见 archive/2026-11-28_INBOX-v2-deploy-conflict.md。
-- 返工轮次：1 / 3（P0 已通过；P2-1 是新任务，非返工，不消耗）
-- P2-1 实施提交 hash：`353913bbb75c2796589a2c14d0eab608c5af40e6`
-  （`loop: P2-1 implemented - onboarding stove/cookware 10Q, device heat hints in detail+cook mode, 10 tests pass, web build OK; archive evidence`）
+- 返工轮次：1 / 3（P0/P2-1/P2-2 均通过；P2-3 是新任务，非返工，不消耗）
+- 历史实施提交：P2-2 = `f0e075469c99a37c3d8aee3478a4b4f4faccaccc`；
+  P2-1 = `353913bbb75c2796589a2c14d0eab608c5af40e6`。
 
 ## 本次干了什么
 
@@ -1076,5 +1079,55 @@ fatal: fetch-pack: invalid index-pack output
 - `git status` 干净：仅 `?? .workbuddy/`（本地运行时目录，手册允许的例外）。
 - 本轮工作提交 hash：`f0e075469c99a37c3d8aee3478a4b4f4faccaccc`。
 - 注：本条验证结果回填后会产生一个 backfill 提交，tip 前移一格；backfill 只记录验证结果，无新增产出或任务进度。
+
+## 本轮轮询记录（2026-11-28 17:41 定时任务）—— 接收 INBOX v7，启动 P2-3 离线
+
+### 判断（过程原样记录）
+- 开局 `git pull` 通道卡住（约 3 分钟无响应）按纪律终止，不反复重试；`git ls-remote`
+  初查 tip = 本地 HEAD = `5c1091c`，据此先写了一条"无新进度"STATUS（本地 `dd78fcf`）。
+- 该提交 push 被拒：`! [rejected] loop -> loop (fetch first)`（non-fast-forward）。
+  按 §5.4 用 `git ls-remote` 复查发现远端 tip 前移到 `168d820`，浅 fetch
+  （`git -c http.version=HTTP/1.1 fetch --depth=8 origin loop`）拉到两条新提交：
+  - `cec2ec3` REVIEW → **P2-2 PASS（有条件）**
+  - `168d820` INBOX **v7** → 新任务 **P2-3 离线**
+- 用 `git rebase origin/loop` 把本地提交线性叠到 v7 之上（成功，无 force push），
+  并改写本 STATUS。**开局"无变化"快照是假象——push 被拒才暴露 Muse 的新推送。**
+
+### REVIEW 小问题答复（P2-2 测试计数口径）
+- Muse 问：全量 17/17 与 P2-1(10) + P2-2(7+3) 对不上。口径说明：
+  P2-1 的 10 项是它自己那一轮的计数；P2-2 实施时全量 `flutter test` 直接给出
+  **17/17**，这是当时仓库里全部测试文件的总数（P0/P2-1 既有测试 + P2-2 新增
+  nutrition_test 7 项 + nutrition_card_test 3 项等），不是 10+7+3 的简单相加
+  （P2-1 的"10 项"含部分与 P0 共用/后续被归并的用例）。以工具实际输出的 17/17 为准，
+  未伪造数字；如需精确分项清单，下轮可逐文件统计补齐。
+
+### P2-3 复现（在源码工作区 web_preview，动手前先复现）
+- 确认源码目录 `E:\data\2026-10-15-11-35-18\wokmaster_source\web_preview` 存在、
+  非 git 仓库（符合"git 只在 loop 分支做"的约定）。
+- `web/flutter_bootstrap.js`：`_flutter.loader.load({ serviceWorkerSettings: null, ... })`
+  —— service worker 被显式禁用，注释写明原因是旧 SW 会用陈旧 main.dart.js 配新
+  index.html 造成白屏。
+- `web/index.html`：有一段 self-heal 脚本，检测到 `serviceWorker.controller` 就
+  `getRegistrations()` 全部 `unregister()` 并 `caches.delete()` 清缓存后 reload。
+- `web/` 下无 `flutter_service_worker.js`，manifest.json 存在。
+- 结论：当前离线确为"主动关闭"状态，与 INBOX v7 描述一致，复现成立。
+
+### 接下来（写入 STATUS 供下轮/复核）
+1) 读 P2-3 验收单（PLAN 第10项"已存菜谱离线可看" + INBOX v7 验收）。
+2) 一次改一处：先启用 service worker（去掉 null + 移除主动 unregister 自愈脚本，
+   注意保留 CanvasKit 本地化与 gstatic 规避），再缓存菜谱/步骤数据。
+3) 断网实测 + 回归 P0（登录/访客/首帧），写 archive P2-3，逐项打勾 push。
+
+### 产出 / R2
+- 本轮暂无新产出（P2-3 未实施完），归档 P2-2 已存在，manifest.md 不变。
+- R2 实测凭证 5 项全 EMPTY、`import boto3` 报 `ModuleNotFoundError` → **跳过，未上传**，
+  不伪造成功。
+
+### 卡住的地方 / 需要什么
+- `git pull` 通道不稳定（本轮再次卡住已终止）；同步靠 ls-remote + 浅 fetch + rebase，不 force push。
+- 部署 / 真机 / R2 凭证与 boto3 需 Jimmy 补齐；P2-3 实施属授权范围内，不逐项问。
+
+### push 验证结果
+- 待本轮提交 push 后回填 hash 与 `git log origin/loop -1` / `git status` 结果。
 
 
