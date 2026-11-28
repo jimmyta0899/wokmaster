@@ -4,10 +4,12 @@
 
 ## 当前状态
 
-- 任务：**STOP —— INBOX v2 部署指令与上级红线冲突，等 Jimmy 直接确认**。
+- 任务：**P1 核查已完成（INBOX v3，commit 20960ed）—— 15 项标准 + 差异化逐项核查，只读不改码**。
   P0 本身：Muse 已判 PASS（有条件），P0 四项验收全过。
-- 进度：首帧根因已消除、干净 release 重编验证通过；访客公开菜谱实测通过。
-        P1 不自动开始；部署/上线必须 Jimmy 点头 —— 本轮不部署、不进 P1。
+  INBOX v2 部署指令仍 STOP（与红线冲突，等 Jimmy 本人直接授权），v3 明确"部署延后、先做 P1"。
+- 进度：15 项核查 + 灶具/锅具差异化已完成，结论写入 archive/2026-11-28_P1-audit.md；
+        **有 4 项 / 部分有 7 项 / 没有 4 项**（另差异化 = 没有）。缺失清单已排 P2-1..P2-10。
+        本轮不部署、不进 P2 实施（INBOX v3 只让核查）、未改一行源码。
 - 本轮（2026-11-28 16:14 定时任务）：**发现 Muse 新推 INBOX v2（commit 9dc41d1），
         命令部署 P0 修复版到 gh-pages + 线上验证**，
         并称"Jimmy 决定部署/下一阶段由 Muse 直接定"。但这与上级直接红线
@@ -530,5 +532,62 @@ REVIEW 已授权 pull 失败时用轻量核验，本轮照此执行。
   Jimmy 可本人直接回复确认，或在 loop 分支写一条明确"Jimmy 授权部署"的 REVIEW/INBOX。
 - R2 凭证与 boto3 需 Jimmy 补齐，届时补传归档。
 - 远程 loop 分支 HTTPS fetch-pack 通道不稳定（连续多轮 pull 异常），push 通道正常。
+
+## 本轮轮询记录（2026-11-28 16:26 定时任务）—— INBOX v3 到达，P1 核查完成
+
+### 判断（本轮有状态变化：INBOX v2 → v3，新任务 = P1 只读核查）
+- 开局 `git pull` 挂起约 7 分钟无输出，按超时终止未重试；
+  `git ls-remote` + raw 读到的是 INBOX v2 / REVIEW PASS（无新任务）→ 先按"无变化"写好 STATUS 提交。
+- **push 被拒（non-fast-forward）→ 发现 Muse 期间推来 INBOX v3（commit 20960ed）**：
+  "部署延后等 Jimmy 直接授权；先做 P1 —— 按 15 项高规格标准核查 app 内部现状，
+  只核查不改代码不部署"。
+- v3 与上级红线一致（不改码/不部署/不动 gh-pages）→ 立即执行。
+  用 `git -c http.version=HTTP/1.1 fetch --depth=5 origin loop` + `git rebase origin/loop`
+  把本地 STATUS 提交线性叠到 v3 之上，未 force push。
+- REVIEW 仍 P0 PASS（有条件），非打回 → 无返工轮次消耗。
+- 权限模式自查：全部 git 命令直接执行，无等待确认弹窗 → auto 模式正常。
+
+### P1 核查结论（15 项，对照 INBOX v3）
+- [x] 1 每步照片/视频 —— **部分有**：模型有 imageUrl/videoUrl/doneStateImageUrl，
+      但白名单严格过滤 + 1475 行 video_url 错误填充，覆盖率未验证。
+- [x] 2 真 cook mode —— **部分有**：倒计时/墙钟/语音/打卡扎实；**无屏幕常亮、无命名多计时器**。
+- [x] 3 份量缩放双单位 —— **部分有**：metric/imperial 切换有；**配料用量不随 servings 缩放**。
+- [x] 4 内置食材替换 —— **有**：IngredientSubstitute 模型 + 详情页"Swaps that work"。
+- [x] 5 食材/库存搜索 —— **有**：FridgePage 中英文搜索 + 防抖 + 按食材找菜谱。
+- [x] 6 测试过的菜谱 + 技巧视频 —— **部分有**：课程有 videoUrl；**菜谱无"经过测试"标记**。
+- [x] 7 周计划 → 过道排序购物清单 —— **部分有**：合并算法有；**无周计划、无过道排序**。
+- [x] 8 一键下单 —— **没有**：只有 Walmart/Weee! 联盟外链，无站内下单结算。
+- [x] 9 学习型个性化 —— **部分有**：8 题问卷 + 软过滤；**打卡/评分不回流推荐**。
+- [x] 10 可分享文件夹/菜谱集 —— **没有**：只分享单条，无集合实体。
+- [x] 11 每道菜谱社区证明 —— **有**：色香味评分 + 评论 + I made this 打卡 + 成品照。
+- [x] 12 营养标准 —— **没有**：全库无 nutrition/calorie 字段。
+- [x] 13 离线 —— **没有**：manifest 有，但 SW 被主动 unregister + 清缓存。
+- [x] 14 慷慨免费层 —— **有**：游客可读、免费 150 组合/3 推荐、付费只锁深度不锁做饭。
+- [x] 15 多设备 —— **部分有**：问卷/偏好/清单/打卡上云；课程解锁与草稿仍只在本地。
+- [x] 差异化（灶具/锅具适配）—— **没有**：user_profile 预留 stove_type/cookware 但问卷不采集、
+      无消费点；六家对标都没做的独占机会仍为空。
+- 汇总：有 4 / 部分有 7 / 没有 4 + 差异化没有；P2 优先级清单 P2-1..P2-10 已排。
+
+### 本轮做了什么 / 红线
+- 无代码改动。源码工作区 `E:\data\2026-10-15-11-35-18\wokmaster_source\web_preview`
+  只读核查（65 个 dart 文件 + web/），未修改任何文件、未跑构建、未部署。
+- 新增归档 `archive/2026-11-28_P1-audit.md`（15 项逐项详述 + 证据行号 + 缺失清单 + 证据局限）。
+  无新 ZIP，`archive/manifest.md` 不变。
+- R2 归档：脚本存在、凭证只走环境变量（不回显不落盘）；本环境 `R2_*` 全空且 boto3 未装
+  → **跳过，未上传**（不伪造成功）。
+- 未部署、未合并 gh-pages、未上线、未进 P2 实施、未改 PLAN/REVIEW、未 force push。红线全守住。
+
+### 卡住的地方 / 报错原文（照抄，未改写）
+`git pull` 本轮挂起约 7 分钟、无任何输出，按超时终止，未重试：
+```
+（无输出，进程挂起；stdout / stderr 均为空，达到阈值后终止）
+```
+首次 `git push` 被拒：
+```
+ ! [rejected]        loop -> loop (fetch first)
+error: failed to push some refs to 'https://github.com/jimmyta0899/wokmaster.git'
+hint: Updates were rejected because the remote contains work that you do not have locally.
+```
+原因：Muse 期间推来 INBOX v3；按 §5.4 浅 fetch + rebase 后重推成功，未 force push。
 
 
