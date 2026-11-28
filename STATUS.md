@@ -764,4 +764,13 @@ fatal: fetch-pack: invalid index-pack output
 - 部署 / 真机首帧复测须 Jimmy 本人点头（P0 通过不等于可上线）。
 - R2 凭证与 boto3 需 Jimmy 补齐；远程 HTTPS fetch-pack 通道不稳（pull 连续多轮异常，push 正常）。
 
+### 本轮 push 验证结果（16:54 轮）
+- push 成功：`77e032b..d15cc40  loop -> loop`（无 non-fast-forward，一次成功）。
+- `git log origin/loop -1` =
+  `d15cc40f8c59296cab315339fa882a9e73c7746f loop: status - no new instruction (INBOX v4/P2-1), P2-1 code task still STOP - workspace is loop dir not source tree, await Jimmy workspace decision; pull index-pack fail, verified via ls-remote`
+- HEAD = origin/loop = `d15cc40f8c59296cab315339fa882a9e73c7746f`（tip 一致）。
+- `git status` 干净：仅 `?? .workbuddy/`（本地运行时目录，手册允许的例外）。
+- 本轮工作提交 hash：`d15cc40f8c59296cab315339fa882a9e73c7746f`
+- 注：本条验证结果回填后会产生 backfill 提交，tip 前移一格；backfill 只记录验证结果，无新增产出或任务进度。
+
 
