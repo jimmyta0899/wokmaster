@@ -2,6 +2,61 @@
 
 <!-- 用法：每次干完活（或返工后）更新这里，再 push。Muse 只看最新版本。 -->
 
+## 当前状态（更新于 2026-11-28 23:50 定时任务·P2-9 实施轮）
+
+- 任务：**P2-9（行为学习闭环：打卡/评分回流推荐权重与口味画像）已实施完成，等 Muse 复核**。
+  本轮处理 **INBOX v12**；REVIEW.md 已是 **P2-7 PASS（有条件）**，非打回 → 不消耗返工轮次（仍 1/3）。
+- 开局 `git pull` 报 schannel / early EOF / index-pack → 按规范用 HTTP/1.1 浅 fetch
+  (`--depth=12`) + `merge --ff-only`（Already up to date）。写「无新指令」STATUS 后 push 被拒 →
+  浅 fetch 发现 Muse 轮询间隙推来 `b948d46` REVIEW P2-7 PASS + `0747e53` INBOX v12（P2-9）
+  → `git rebase origin/loop` 线性同步（**未 force push**）→ 按 P2-9 实施。
+  **经验复核：push 被拒先浅 fetch 看远端，别信开局快照。**
+- 授权：一切 Muse 决定、不再找 Jimmy 确认；跨目录改源码有效；INBOX v12 明确本轮不部署
+  → **未部署**。未改 PLAN.md / REVIEW.md，未 force push。
+- 源码工作区 = `E:\data\2026-10-15-11-35-18\wokmaster_source\web_preview`（已确认存在，本轮在其内改动）。
+
+### 改了哪些文件（源码工作区）
+- 新增 5 个 Dart 文件：`lib/data/models/taste_profile.dart`（信号/画像/覆盖模型）、
+  `lib/core/utils/taste_learning.dart`（buildProfile + tasteScore + 稳定排序）、
+  `lib/core/services/taste_profile_store.dart`（SharedPreferences `wm.tasteprofile.v1`）、
+  `lib/providers/taste_profile_provider.dart`（StateNotifier + 记录/改覆盖 + 派生排序器）、
+  `lib/pages/profile/taste_profile_page.dart`（画像查看/编辑页）。
+- 新增 2 个测试文件：`test/taste_learning_test.dart`、`test/taste_profile_store_test.dart`（15 项）。
+- 改动 5 个既有文件：`log_cook_sheet.dart`（Quick Log 成功沉淀信号）、
+  `recipe_detail_page.dart`（传入 Recipe 元数据）、`cook_page.dart`（Rate & Review 带评分+实测耗时）、
+  `tonight_page.dart`（画像 watch 加权排序后再生成组合）、`app_router.dart`（`/taste-profile`）、
+  `profile_page.dart`（画像入口）。
+- 归档：`archive/2026-11-28_P2-9-behavior-learning.md`（复现→改动→验证→边界→验收逐条）。
+
+### 实测结果
+- 基线复现：`flutter test` **76/76**；全库无 taste/画像/回流代码 → 功能缺失，非回归。
+- 分层单测：新增核心 **15/15**；全量 **91/91 通过**（基线 76 + 新增 15）。
+- `flutter analyze`：10 issues 全为改动前既有（dart:html/anonKey 弃用 info + 2 处 unused-field
+  warning），**新增文件 0 error / 0 warning**。
+- `flutter build web --release` → 成功（83.4s），产物命中 `wm.tasteprofile.v1`，SW 存在。
+- 浏览器实测（CDP + headless Chrome，release 产物）：首帧 **4.4–4.6s**（<10s）；
+  访客 `/recipe/ants-climbing-tree` 未跳登录；`/taste-profile` 中性画像渲染完整、
+  单独访问 0 console error；**种子 2 条信号后重载，页面显示「Based on 2 cooks」、
+  川菜亲和满/粤菜浅、三个滑杆移到学到档位** —— store→provider→UI 全链通过。
+  截图/JSON 在源码工作区 `.mobai-scratch/p29-*`（不同步进 loop）。
+
+### 对照 INBOX v12 验收单
+- [x] 打卡/评分沉淀为口味画像，画像可查看/可改（模型+store+provider+画像页；两处打卡接线）。
+- [x] Tonight 推荐顺序随画像变化，有数据加权/无数据默认（rankRecipes 单测覆盖升/沉/反转/稳定/不减候选）。
+- [x] 不回归 P0（91/91、首帧 4.4–4.6s、访客不跳登录、画像页 0 console error）。
+- [ ] 端到端「真实打卡→信号落库」与「画像前后 Tonight 顺序对比」——本地无 Supabase，
+      未走通，诚实留白（证据为单测 + 接线 + build，见归档 §4）。
+- [ ] 真机/线上 —— 本轮不部署，留待 Muse 定部署后验证。
+
+### 产出 / R2 / 归档
+- 归档：`archive/2026-11-28_P2-9-behavior-learning.md`。
+- R2：`holia_import/upload_to_r2.py`（工作区根）存在，但 `R2_*` / `CF_R2_*` 全 EMPTY
+  → **跳过上传，未伪造成功**，凭证未回显未落盘；无 ZIP 产出，`manifest.md` 无需更新。
+- 对话 md 同步：见本 STATUS + 归档（循环文件在 loop 分支）。
+
+### 本轮 push 验证结果
+- 待 push 后回填 commit hash / `git log origin/loop -1` / `ls-remote` / 工作区清洁度。
+
 ## 当前状态（更新于 2026-11-28 23:17 定时任务·无新指令轮询）
 
 - 局面：本轮开局 `git pull` 报 schannel / early EOF / index-pack → 按规范改用
