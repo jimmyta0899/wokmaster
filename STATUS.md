@@ -714,4 +714,54 @@ hint: Updates were rejected because the remote contains work that you do not hav
 - 本轮工作提交 hash：`91f402209a859ce1753354440a9967e7586d6a55`
 - 注：本条验证结果回填后会产生 backfill 提交，tip 前移一格；backfill 只记录验证结果，无新增产出或任务进度。
 
+## 本轮轮询记录（2026-11-28 16:54 定时任务）—— 无新指令，P2-1 持续 STOP，等 Jimmy 工作区决策
+
+### 判断
+- `git ls-remote origin refs/heads/loop` = `77e032b49ca62fb1ff5bdafd3ca4ec9b4278b8d2` = 本地 HEAD
+  → 远程 loop 分支无新提交，Muse 未推新指令。
+- 本地 INBOX.md 仍是 **v4**（P2-1 灶具/锅具适配，改代码任务）；REVIEW.md 仍是 **P1 核查 PASS**
+  （下一步 P2，INBOX v4 先做 P2-1）。INBOX 版本未变、REVIEW 结论未变 → 无新任务版本、
+  无返工轮次消耗（返工仍 1/3）。
+- **关键卡点持续（同 16:40 / 16:48 轮）**：P2-1 是需要改代码的任务，但当前会话
+  Workspace Folder = `E:\data\2026-10-15-11-35-18\wokmaster-loop`（loop 目录，只读写循环文件），
+  不是源码工作区 `E:\data\2026-10-15-11-35-18\wokmaster_source\web_preview`。
+  按用户规则第 3 条"若当前工作区不是源码目录，先停下来告诉我，不要动手"，
+  本轮**不进源码工作区、不改一行代码**。（源码目录已确认存在，本轮未触碰。）
+- 两样都没变且无新进度 → 按手册第 5 章 / §2 第 4 步，只推一条"进行中/维持 STOP"STATUS，
+  不重复干活、不空提交。
+- 权限模式自查：本轮 git 命令（pull / ls-remote / status / log）均直接执行，
+  无等待确认弹窗/挂起 → auto 模式正常。
+
+### 本轮做了什么
+- 无代码改动。源码工作区 `web_preview` 本轮未触碰。
+- R2 归档：脚本 `E:\data\2026-10-15-11-35-18\holia_import\upload_to_r2.py` 存在，凭证只从环境变量
+  读取（不回显不落盘）。本环境 `R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY /
+  R2_BUCKET / R2_ENDPOINT` 全空，且 boto3 未装
+  （`ModuleNotFoundError: No module named 'boto3'`）→ **跳过，未上传**（不伪造成功）。
+- 无新对话 md / ZIP 产出：`archive/` 现有五份 md 与 `manifest.md` 内容不变，不做空同步。
+- 未部署、未合并 gh-pages、未上线、未进 P2 实施、未改 PLAN/REVIEW、未 force push。红线全守住。
+
+### 卡住的地方 / 报错原文（照抄，未改写）
+`git pull` 本轮带 25s 超时，返回：
+```
+fatal: fetch-pack: invalid index-pack output
+```
+（退出码 124，因超时终止；未重试。）
+注：连续多轮 pull 异常（RPC failed / schannel / early EOF / index-pack 失败）。`git ls-remote`
+正常 → 只 pull 的 fetch-pack 传包通道不稳，判断不受盲区影响。REVIEW 已授权 pull 失败时用
+轻量核验，本轮照此执行。
+
+### 试过什么
+1. `git pull`（带超时）—— `fatal: fetch-pack: invalid index-pack output`，超时终止（本轮 1 次，不重试）。
+2. `git ls-remote origin refs/heads/loop` —— 成功，确认远程 tip 无变化（= 本地 HEAD）。
+
+### 需要什么（承接 16:40 / 16:48 轮，仍待 Jimmy）
+- **让本会话具备改代码的合法工作区**：把定时任务工作区（automation cwds）切到
+  `E:\data\2026-10-15-11-35-18\wokmaster_source\web_preview`，或明确授权本会话跨目录改源码。
+  在此之前 P2-1 不启动（用户规则第 3 条）。
+- P2-1 验收（INBOX v4）：问卷采集灶火/锅具并存档案；步骤火候提示按设备变化有实测证据；
+  不回归 P0（登录/访客/首帧）。不做 P2-8 一键下单。
+- 部署 / 真机首帧复测须 Jimmy 本人点头（P0 通过不等于可上线）。
+- R2 凭证与 boto3 需 Jimmy 补齐；远程 HTTPS fetch-pack 通道不稳（pull 连续多轮异常，push 正常）。
+
 
