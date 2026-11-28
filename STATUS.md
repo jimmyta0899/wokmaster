@@ -4,14 +4,15 @@
 
 ## 当前状态
 
-- 任务：v1 / P0 首帧性能返工（REVIEW 打回，返工第 1 轮 / 共 3 轮）
-- 进度：首帧根因已定位并修复、干净 release 重编验证通过；访客公开菜谱实测通过。
-        等 Muse 复核。P1 未开始（REVIEW 未明确通过前不动）。
-- 本轮（2026-11-28 15:45 定时任务）：INBOX 仍 v1、无新任务；REVIEW 仍为打回第 1 轮，
-        打回两项上轮已完成并 push，无新返工可做。本轮仅推"进行中/等复核"STATUS，
-        不重复干活、不进 P1。git pull 再次失败，但 ls-remote 已确认远程 tip = 本地 HEAD
-        （b66f4d1），无 Muse 新推内容；详见文末"本轮轮询记录"。
-- 返工轮次：1 / 3
+- 任务：v1 / P0 首帧性能返工 —— **Muse 已判 PASS（有条件），P0 四项验收全过**。
+- 进度：首帧根因已消除、干净 release 重编验证通过；访客公开菜谱实测通过。
+        P1 不自动开始，等 Jimmy 确认下一阶段再动；部署/真机复测须 Jimmy 点头。
+- 本轮（2026-11-28 15:51 定时任务）：开局 REVIEW 仍为打回第 1 轮（两项已完成），INBOX v1。
+        本轮 git pull 挂起被终止；ls-remote 初次显示远程 tip = 本地 HEAD（89ce1f4）无新内容。
+        提交 STATUS 后 push 被拒（remote contains work you do not have）——Muse 期间推来新
+        REVIEW（commit 21e24dc）：**P0 PASS（有条件）**。浅 fetch 取回、rebase 后据新结论
+        改写本条 STATUS。P1 仍未开始。详见文末"本轮轮询记录"。
+- 返工轮次：1 / 3（P0 已通过，返工结束）
 - 工作提交 hash：`9a92e28a0a97b3ad6b27a3a471ac066e7ad19e58`
   （`loop: P0 rework r1 - fix first-paint gstatic font hang, guest recipe verified`）
 
@@ -239,4 +240,58 @@ fatal: fetch-pack: invalid index-pack output
 - 本轮提交 hash：`febc54d4ca4009c5a79b17ee28e3ebe14c186339`
 - 注：本条验证结果回填后会产生一个 backfill 提交，tip 会前移一格；backfill 提交只是
   记录验证结果，无新增产出或任务进度。
+
+## 本轮轮询记录（2026-11-28 15:51 定时任务）
+
+### 判断（本轮有状态变化：P0 由打回转 PASS）
+- 开局读到的 INBOX.md 版本 v1，与 STATUS 上次处理版本一致 → 无新任务版本。
+- 开局 REVIEW.md 是"打回（返工第 1 轮）"，打回两项（首帧首屏、访客实测）已于 9a92e28
+  完成并 push；本轮准备只推一条"等复核"STATUS。
+- **推 STATUS 时被拒（non-fast-forward）→ 发现 Muse 期间推来新 REVIEW（21e24dc）：
+  P0 PASS（有条件）。** 首帧根因消除、访客实测通过、登录/注册未回归，P0 四项全过。
+- 新 REVIEW 明确：P1 不自动开始，等 Jimmy 确认下一阶段；部署/真机复测须 Jimmy 点头。
+  故本轮不进 P1、不部署，只更新 STATUS 反映 PASS，等 Jimmy/Muse 下一步指令。
+
+### 远程状态（pull 失败，ls-remote + 浅 fetch 取回新结论）
+- 初次 `git ls-remote origin refs/heads/loop` = `89ce1f4...` = 本地 HEAD → 此时无新内容。
+- 提交 STATUS 后 `git push` 被拒：`! [rejected] loop -> loop (fetch first)` /
+  `Updates were rejected because the remote contains work that you do not have locally`。
+- 复查 `git ls-remote` = `21e24dc1b10df4e0199191e0adf5cf0ff1ca4b3d`（远程已前移）。
+- `git fetch --depth=3 origin loop` + `git rebase origin/loop` 成功取回并适用 Muse 新 REVIEW。
+- 未 force push；本地未推的 STATUS 提交通过 rebase 叠到 Muse 提交之上，线性历史。
+
+### 本轮做了什么
+- 无代码改动。源码工作区 `wokmaster_source/web_preview` 本轮未触碰（P0 已通过，P1 待 Jimmy 点头）。
+- 据 Muse 新 REVIEW 更新 STATUS：P0 PASS、P1 待确认、返工结束。
+- R2 归档：脚本 `holia_import/upload_to_r2.py` 存在，但 `R2_ACCOUNT_ID /
+  R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET / R2_ENDPOINT` 全空，且 boto3
+  未安装 → **跳过，未上传**（不伪造成功）。凭证就绪后补传。
+- 无新对话 md / ZIP 产出，archive/ 与 manifest.md 内容不变（不空提交）。
+- 未部署、未合并 gh-pages、未上线，红线守住。
+
+### 卡住的地方 / 报错原文（照抄，未改写）
+`git pull` 本轮只试一次，挂起约 4m46s 无任何输出，按"同一假设试两次没用就停下"及超时
+阈值手动终止：
+```
+（无输出，进程挂起；stdout 仅到 "---PULL---" 标记，stderr 为空，达到阈值后终止）
+```
+注：连续第 4 轮 pull 异常（前三轮为 schannel RPC failed / early EOF，本轮为挂起无输出）。
+`git ls-remote`（轻量 ref 查询）正常返回，远程可读；仅 pull 的 fetch-pack 传包通道不稳定。
+
+### 试过什么
+1. `git pull` —— 挂起约 4m46s 无输出，终止（本轮 1 次，不重试）。
+2. `git ls-remote origin refs/heads/loop` —— 初次成功（tip 89ce1f4），push 被拒后复查
+   成功（tip 21e24dc，发现新 REVIEW）。
+3. `git fetch --depth=3 origin loop` + `git rebase origin/loop` —— 成功取回 Muse
+   新 REVIEW 并把本地未推的 STATUS 提交线性叠上去。
+4. 新 REVIEW 提供备用办法：pull 失败时可直接 raw.githubusercontent.com 读分支文件。
+
+### 需要什么
+- **Jimmy 确认是否进入 P1**（新 REVIEW：P1 不自动开始，等 Jimmy 确认下一阶段）。
+- **部署 / 真机首帧复测须 Jimmy 点头**（P0 通过不等于可上线；线上 <10s 尚未真机复测）。
+- 远程 loop 分支 HTTPS fetch-pack 通道不稳定（连续第 4 轮 pull 异常）。本轮靠浅 fetch
+  成功取回新内容，未阻塞；后续若 fetch 也失败，按新 REVIEW 用 raw.githubusercontent.com
+  读分支文件，不要干等。
+- R2 凭证与 boto3 需 Jimmy 补齐，届时补传归档。
+
 
