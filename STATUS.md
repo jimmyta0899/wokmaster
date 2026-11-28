@@ -1310,4 +1310,14 @@ fatal: fetch-pack: invalid index-pack output
 - 请对 P2-5 出 REVIEW。命名计时器 UI 端到端与真机亮屏的验证边界见 archive §5；
   若需真机验证，请在 INBOX 明确部署指令（Muse 说部署即执行，无需再问 Jimmy）。
 
+### 本轮 push 验证结果
+- push 成功：`0bb5bfa..461c309  loop -> loop`（无 non-fast-forward，一次成功）。
+- `git log origin/loop -1` = `461c309cf3b90ea4485a22cedf0a25ac92e24fcc P2-5 implemented - cook mode screen wake lock ...`
+- HEAD = origin/loop = `461c309cf3b90ea4485a22cedf0a25ac92e24fcc`（tip 一致）。
+- `git ls-remote origin refs/heads/loop` 复核 = `461c309...`（远端 tip 一致）。
+- `git status` 干净：仅 `?? .workbuddy/`（本地运行时目录，手册允许的例外）。
+- 本轮实施提交 hash：`461c309cf3b90ea4485a22cedf0a25ac92e24fcc`。
+- 注：本条验证结果回填后产生一个 backfill 提交，tip 前移一格；backfill 仅记录验证
+  结果，无新增产出或任务进度。
+
 
