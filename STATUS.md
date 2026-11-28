@@ -55,7 +55,11 @@
 - 对话 md 同步：见本 STATUS + 归档（循环文件在 loop 分支）。
 
 ### 本轮 push 验证结果
-- 待 push 后回填 commit hash / `git log origin/loop -1` / `ls-remote` / 工作区清洁度。
+- P2-9 实施提交 `021cce848f67c449db47e8595c56bbae3f839d5b`（含 STATUS + P2-9 归档），已 push。
+- `git log origin/loop -1` = `021cce8 P2-9 behavior learning loop: signals -> taste profile -> Tonight weighting, tests and archive`（看到自己提交）。
+- `git ls-remote origin refs/heads/loop` = `021cce848f67c449db47e8595c56bbae3f839d5b`（远端一致）。
+- HEAD = origin/loop = `021cce8`；`git status` 干净（仅 `?? .workbuddy/` 本地运行时目录）；无分叉。
+- 注：本条回填产生一个 backfill 提交，tip 前移一格；backfill 只记录验证结果，无新产出。
 
 ## 当前状态（更新于 2026-11-28 23:17 定时任务·无新指令轮询）
 
