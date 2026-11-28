@@ -773,4 +773,68 @@ fatal: fetch-pack: invalid index-pack output
 - 本轮工作提交 hash：`d15cc40f8c59296cab315339fa882a9e73c7746f`
 - 注：本条验证结果回填后会产生 backfill 提交，tip 前移一格；backfill 只记录验证结果，无新增产出或任务进度。
 
+## 本轮轮询记录（2026-11-28 16:54 定时任务，续 17:13）—— INBOX v4 → v5，P2-1 实施完成
+
+### 判断（本轮有状态变化：Muse 期间推来 INBOX v5）
+- 开局无新指令，写好 16:54 轮 STATUS 并 push（`d15cc40`）；
+  backfill push 被拒（non-fast-forward）→ shallow fetch + rebase 后发现新提交
+  `a979cdf`：**INBOX v5 —— Jimmy 原话"好，授权它跨目录改源码"**，P2-1 任务不变。
+- 该授权正好解开前几轮的工作区卡点（用户规则第 3 条此次放行，仅限跨目录改源码）。
+  按 §5.4 fetch + rebase 同步，未 force push，backfill 重推成功（`2476743`）。
+- REVIEW 仍是 P1 核查 PASS，非打回 → 返工轮次不消耗（仍 1/3）。
+- 权限模式自查：全部 git / flutter 命令直接执行，无等待确认弹窗 → auto 正常。
+
+### 干了什么（代码在源码工作区 web_preview 改，本地跑通）
+- 先复现：新增 `test/device_heat_hint_test.dart` 首跑编译失败（模块不存在）→ 确认功能缺失。
+- 新增 `lib/core/utils/device_heat_hint.dart`（纯 Dart 灶火×火候、锅具→提示映射）、
+  `lib/core/widgets/device_hint_card.dart`（详情页/cook mode 共用提示条）、
+  `test/device_heat_hint_test.dart`（8 条）、`test/device_hint_card_test.dart`（2 条）。
+- 修改 `lib/pages/onboarding/onboarding_page.dart`（问卷 8→10 题：Q9 灶火、Q10 锅具；
+  草稿/恢复/清理/落库/即时生效全链路；老库无新列时兼容重试）、
+  `lib/providers/recipe_providers.dart`（stoveType/cookware/deviceHint 三个 provider）、
+  `lib/main.dart`（冷启动恢复）、`lib/pages/recipe/recipe_detail_page.dart`（步骤提示）、
+  `lib/pages/cook/cook_page.dart`（当前步骤提示）、`build/web/`（release 重建，未部署）。
+- 源码工作区不是 git 仓库 → 无源码 commit hash；改动已落盘并本地构建通过。
+
+### 产出文件在哪
+- 源码：`E:\data\2026-10-15-11-35-18\wokmaster_source\web_preview\lib\...`（上面逐项列出）、
+  `test/device_heat_hint_test.dart`、`test/device_hint_card_test.dart`、`build/web/`。
+- 归档对话 md：`archive/2026-11-28_P2-1-stove-cookware.md`（本轮详细记录）。
+- 浏览器证据：`web_preview/.mobai-scratch/` 下 `p2-smoke-result.json`、
+  `p2-onboard-walk.json`、`p2-q9-stove.png`、`p2-q10-final.png`（未同步二进制进 loop 分支）。
+- ZIP：本轮无新 ZIP，`archive/manifest.md` 不变。
+
+### 自评（对照 INBOX v4/v5 P2-1 验收单）
+- [x] 问卷能采集灶火/锅具并存入档案：Q9/Q10 真机渲染；写 SharedPreferences +
+      登录态 upsert `users.stove_type`/`users.cookware`；冷启动恢复。
+- [x] 步骤火候提示按设备变化，有实测证据：8 条单测 + 2 条 widget 测试全过；
+      燃气=最大火、电磁炉=1800–2000W/8–9 档、电灶=预热 3–5 分钟、小火+汤锅=盖盖；
+      换灶火/换锅具文案确实不同；详情页与 cook mode 共用同一 `deviceHintProvider`。
+- [x] 不回归 P0（登录/访客/首帧）：未触碰 auth/router/guest 代码；
+      本地 release 首帧 FCP 3492ms < 10s、0 exception、0 console error。
+- [ ] 线上真机复核：**未验证**（部署属红线，须 Jimmy 点头）。
+
+### 验证细节
+- `flutter test`：10/10 passed（`All tests passed!`）。
+- `flutter analyze`：10 issues，均为改动前既有 deprecated/unused，**无 error**。
+- `flutter build web --release`：成功，`√ Built build\web`（编译 81.1s）。
+- 真实浏览器（fresh profile，本地 release）：问卷从 Step 1 of 10 走查到 Step 10，
+  Q9 显示 Gas/Electric/Induction，Q10 显示 Wok/Skillet/Saucepan/Stockpot/Non-stick，0 异常。
+
+### 卡住的地方 / 诚实记录
+- 本地 build 未注入 Supabase dart-define，无线上真实菜谱数据 → 详情页/cook mode 的
+  设备提示**未做线上端到端截图**；证据为 widget 测试 + 代码接线。
+  数据库是否已有 `stove_type`/`cookware` 列本地无法验证 → 已加兼容兜底（无列时不阻塞问卷）。
+- Q9/Q10 中文标注少量豆腐块（NotoSansSC 子集覆盖不全），P0 阶段既有问题，未改字体子集。
+- R2：脚本存在，凭证只走环境变量（不回显不落盘）；本环境 `R2_*` 全空且 boto3 未装
+  （`ModuleNotFoundError: No module named 'boto3'`）→ **跳过，未上传**（不伪造成功）。
+- `git pull` 开局 `fatal: fetch-pack: invalid index-pack output`（超时终止，未重试）；
+  `ls-remote` / shallow fetch 正常，判断不受盲区影响。
+- 未部署、未合并 gh-pages、未上线、未改 PLAN/REVIEW、未 force push。红线全守住。
+
+### 提交记录（本轮）
+- `d15cc40`：16:54 轮 STATUS（无新指令/维持 STOP）。
+- `2476743`：backfill 16:54 验证结果（rebase 到 INBOX v5 之上）。
+- P2-1 实施与归档提交 hash：待本节 push 后回填。
+
 
