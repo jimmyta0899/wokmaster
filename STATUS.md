@@ -1011,4 +1011,62 @@ fatal: fetch-pack: invalid index-pack output
 - 本轮工作提交 hash：`e8cb09e6a81ef18fa907d1140e093f30b673235b`。
 - 注：本条验证结果回填后会产生一个 backfill 提交，tip 前移一格；backfill 只记录验证结果，无新增产出或任务进度。
 
+## 本轮轮询记录（2026-11-28 17:24 定时任务 · 第二段）—— INBOX v6 新任务 P2-2 营养标准，已实施
+
+### 判断
+- 17:24 首段推"进行中 STATUS"时被拒（non-fast-forward）：`! [rejected] loop -> loop (fetch first)`。
+  复查 `git ls-remote` 发现远程 tip 从 `dad4b60` 前移到 `8e9f3f0`，Muse 期间推来两条：
+  `236eb88` REVIEW→PASS（P2-1，有条件）、`8e9f3f0` INBOX v6（P2-2 营养标准）。
+- 按手册 §5.4 + memory 经验：不 force push；用
+  `git -c http.version=HTTP/1.1 fetch --depth=5 origin loop` + `git rebase origin/loop`
+  恢复，本地 backfill 提交线性叠到 v6 之上，未 force push。
+- INBOX **v6** = 新任务版本，REVIEW = **P2-1 PASS（有条件）非打回**。据此进入 P2-2，
+  无返工轮次消耗（返工仍 1/3）。Jimmy 跨目录改源码授权在 v6 继续有效。
+
+### 做了什么（源码工作区 E:\data\2026-10-15-11-35-18\wokmaster_source\web_preview）
+- **先复现/摸底**：grep 确认全库无 nutrition/calorie/protein 字段；Recipe 模型 50 列无营养列；
+  详情页无营养区。数据源为 Supabase `recipes` 表。
+- **一次改一处、改完即测**：
+  1) 新增纯 Dart 营养层 `lib/core/utils/nutrition.dart`：来源值优先 + 按食材大类/关键词估算，
+     8 项单测先过（7/7）；
+  2) Recipe 模型加 4 个可选来源字段 + `toDoubleOrNull`（区分来源 0 与无数据）；
+  3) 新增详情页营养卡 `lib/core/widgets/nutrition_card.dart`（估算标 Est. + "非实验室检测值"）；
+  4) 详情页食材区后插入营养 sliver，`_nutritionSection()` 来源优先否则估算；
+  5) 补 3 项 widget 测试（首轮因双语标注 zx() 文本期望写错失败，改断言后 3/3 过）。
+- 改动文件：新增 `nutrition.dart` / `nutrition_card.dart` / `nutrition_test.dart` /
+  `nutrition_card_test.dart`；改 `recipe.dart` / `parse_utils.dart` / `recipe_detail_page.dart`。
+
+### 验证（改完本地跑通，未部署）
+- `flutter test` 全量 **17/17 通过**（含 P2-1 回归）；`flutter analyze lib` 10 issues 全为既有、无 error；
+  `flutter build web --release` 成功（`√ Built build\web`）。
+- 真实浏览器本地复测（fresh profile，本地 HTTP，非部署）：冷启动 FCP **3444ms**（<10s），
+  `consoleErrors=[]`、`exceptions=[]`；游客入口 `stayedOnLogin=false`，未被登录墙拦截。
+  P0 登录/注册代码本轮未触碰，由既有 PASS 覆盖。
+
+### 产出在哪
+- 源码改动在源码工作区（非 git 仓库，改完本地验证即可，git 只在 loop 分支做）。
+- 归档：`archive/2026-11-28_P2-2-nutrition.md`（来源值/估算方法/局限/验收证据完整记录）。
+- 浏览器原始记录：`web_preview/.mobai-scratch/coldstart-p2-2-result.json`、`guest3-result.json`。
+- R2 归档：脚本存在，本轮实测凭证 5 项全 EMPTY、boto3=MISSING → **跳过，未上传**（不伪造成功）。
+- ZIP：无新产出，`manifest.md` 不变，不做空同步。
+
+### 自评（对照 INBOX v6 P2-2 验收单）
+- [x] Recipe 有营养字段，详情页有营养条且数值合理 —— 4 来源字段 + 营养卡，单测数值落合理区间，构建过。
+- [x] 数据来源和估算方法有记录，不伪造精确值 —— 归档第 2 节完整记录，UI 标 Est. + 免责说明。
+- [x] 不回归 P0 —— 首帧 3444ms、游客入口正常、auth 未动、全量测试含 P2-1 回归全过。
+- [ ] 线上真机 / 真实菜谱端到端：**未验证**（部署属红线，须 Jimmy 点头）。
+
+### 卡住的地方 / 报错原文
+- 本轮无卡点。17:24 首段 push 被拒已按 §5.4 用浅 fetch + rebase 恢复，未 force push。
+  首轮 widget 测试失败是测试断言未计入 zx() 双语标注（Expected "Est." / Actual "Est. / 估算"），
+  修正断言后通过，非代码缺陷。
+
+### 需要什么（等 Muse / Jimmy）
+- **等 Muse 对 P2-2 出 REVIEW**。
+- 部署 / 真机首帧 / 营养条端到端须 Jimmy 直接授权。
+- R2 凭证与 boto3 需 Jimmy 补齐。
+
+### 本轮 push 验证结果
+- 待回填（push 后写入，含提交 hash 与 `git log origin/loop -1` / `git status` 结果）。
+
 
