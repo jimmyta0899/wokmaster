@@ -2,6 +2,56 @@
 
 <!-- 用法：每次干完活（或返工后）更新这里，再 push。Muse 只看最新版本。 -->
 
+## 当前状态（更新于 2026-11-28 定时任务·P2-7 实施轮）
+
+- 任务：**P2-7（周计划 + 按过道排序购物清单）已实施完成，等 Muse 复核**。本轮处理
+  INBOX v11；REVIEW.md 是 P2-6 **PASS（有条件）**，不是打回 → 不消耗返工轮次（仍 1/3）。
+- 开工先 `git pull`：index-pack/early-EOF 类错误 → 按规范用 HTTP/1.1 浅 fetch
+  (`--depth=12`) + `merge --ff-only` 同步到远端 tip `586d150`（INBOX v11 + REVIEW P2-6）。
+- 授权：一切 Muse 决定、不再找 Jimmy 确认；跨目录改源码有效；INBOX v11 明确本轮不部署
+  → **未部署**。未改 PLAN.md / REVIEW.md，未 force push。
+- 局面判定：动手前确认源码工作区 `E:\data\2026-10-15-11-35-18\wokmaster_source\web_preview`
+  存在（源码不是独立 git 仓库，按既往轮次只改文件、在 loop 分支提交归档与 STATUS）。
+
+### 改了哪些文件（源码工作区见上）
+- 新增 5 个 Dart 源文件 + 3 个测试文件：`weekly_plan.dart`（7 天计划/档位/配料快照模型）、
+  `aisle_order.dart`（11 分区 + storeSection→category→item 三级映射 + 合并去重排序）、
+  `weekly_plan_store.dart`（SharedPreferences `weeklyplan.v1` 持久化）、
+  `weekly_plan_provider.dart`（Riverpod + 一键并入购物车）、
+  `weekly_plan_page.dart`（7 天卡片 + 选菜 + 过道预览 + 主 CTA）与对应 15 项单测。
+- 改动 4 个既有文件：`cart_provider.dart`（`amountText` + `mergeShoppingLines()`）、
+  `shopping_list_page.dart`（显示换算后用量）、`app_router.dart`（`/plan` 路由）、
+  `home_page.dart`（首页 AppBar 入口，不动 6 项 dock）。
+
+### 实测结果
+- 基线复现：`flutter test` **61/61**，全库无 weekly/aisle 代码 → 功能确实缺失。
+- 分层验证：新增纯 Dart 层单测 **12/12**；全量 **76/76 通过**（基线 61 + 新增 15）。
+- `flutter analyze`（指定 8 个改动文件 + 全量）→ 仅既有 `dart:html` 弃用 info，无 error/warning。
+- `flutter build web --release` → 成功；产物命中 `weeklyplan.v1` / `Generate shopping list` /
+  `Asian & International`；SW 文件存在。
+- 浏览器实测（Chrome headless + CDP，release 产物）：首帧 boot **4.0–4.4s**（< 10s），
+  访客路径 `/recipe/ants-climbing-tree` 未跳登录，`/plan` 截图确认 7 天网格 +
+  「Shopping list preview (by aisle)」预览 + CTA；无 console error / uncaught exception。
+  踩坑已修复：Flutter web 用 path 路由且需根路径托管，`#/plan` 与 `/wokmaster/plan` 都
+  会 Page Not Found；Flutter canvas 无 DOM 文本，文案以截图为准。
+
+### 对照 INBOX v11 验收单
+- [x] 一周 7 天排菜、清单合并去重、按过道顺序排列（15 单测 + 页面截图）。
+- [x] 清单用量与份量缩放一致（复用 P2-6 同一 `ServingScaler`，½x/1x/2x 断言进清单）。
+- [x] 不回归 P0（76/76、首帧 4s、访客不跳登录、无 console error）。
+- [ ] 端到端「搜索→选菜→生成清单」全链：本地无 Supabase 菜谱数据，未走通，诚实留白。
+- [ ] 真机/线上：本轮不部署，留待 Muse 定部署后验证。
+
+### 产出 / R2 / 归档
+- 归档：`archive/2026-11-28_P2-7-weekly-plan.md`（复现→改动→验证→边界→验收逐条）。
+- R2：`holia_import/upload_to_r2.py` 存在，但 `R2_*` / `CF_R2_*` 环境变量全 EMPTY →
+  **跳过上传，未伪造成功**，凭证未回显未落盘；无 ZIP 产出，`manifest.md` 无需更新。
+- 浏览器截图留源码工作区 `.mobai-scratch/p27-plan*.png`（不同步进 loop）。
+
+### 本轮 push 验证结果
+- 提交 hash：待本轮 push 后回填（backfill 提交）。
+- `git log origin/loop -1` / `ls-remote` / `git status`：待 push 后回填，未验证前不写「已完成」。
+
 ## 当前状态（更新于 2026-11-28 17:41 定时任务·P2-3 实施轮）
 
 - 任务：**P2-3 离线已实施完成并 push，等 Muse 复核**。INBOX v7（新任务 P2-3）
