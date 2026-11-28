@@ -590,4 +590,14 @@ hint: Updates were rejected because the remote contains work that you do not hav
 ```
 原因：Muse 期间推来 INBOX v3；按 §5.4 浅 fetch + rebase 后重推成功，未 force push。
 
+### 本轮 push 验证结果
+- push 成功（rebase 后重推）：`20960ed..e6fce9d  loop -> loop`
+- `git log origin/loop -1` =
+  `e6fce9d9f42ebd363e1c310e2a27266d4a3705ac loop: P1 audit - 15 standards + cookware differentiation, 4 have/7 partial/4 absent, P2 gap list`
+- `git ls-remote origin refs/heads/loop` 复核 = `e6fce9d...`（远程 tip 一致）
+- HEAD = origin/loop = `e6fce9d9f42ebd363e1c310e2a27266d4a3705ac`
+- `git status` 干净：仅 `?? .workbuddy/`（本地运行时目录，手册允许的例外）
+- 本轮工作提交 hash：`e6fce9d9f42ebd363e1c310e2a27266d4a3705ac`
+- 注：本条验证结果回填后会产生 backfill 提交，tip 前移一格；backfill 只记录验证结果，无新增产出或任务进度。
+
 
