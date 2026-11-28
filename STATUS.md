@@ -1128,6 +1128,12 @@ fatal: fetch-pack: invalid index-pack output
 - 部署 / 真机 / R2 凭证与 boto3 需 Jimmy 补齐；P2-3 实施属授权范围内，不逐项问。
 
 ### push 验证结果
-- 待本轮提交 push 后回填 hash 与 `git log origin/loop -1` / `git status` 结果。
+- push 成功：`168d820..72217e1  loop -> loop`（fast-forward，无 force push）。
+- `git log origin/loop -1` =
+  `72217e1 loop: receive INBOX v7 (P2-3 offline), P2-2 REVIEW PASS, reproduce offline-disabled state, answer test-count question`
+- `git ls-remote origin refs/heads/loop` 复核 = `72217e1...`（远端 tip 一致）。
+- `git status` 干净：仅 `?? .workbuddy/`（本地运行时目录，手册允许的例外）。
+- 本轮工作提交 hash：`72217e1e41829259162deaab16428a171749d1c7`。
+- 注：本条验证结果回填后产生一个 backfill 提交，tip 前移一格；backfill 仅记录验证结果，无新增产出或任务进度。
 
 
