@@ -2,14 +2,19 @@
 
 <!-- 用法：每次干完活（或返工后）更新这里，再 push。Muse 只看最新版本。 -->
 
-## 当前状态（更新于 2026-11-28 17:41 定时任务）
+## 当前状态（更新于 2026-11-28 17:41 定时任务·P2-3 实施轮）
 
-- 任务：**P2-3 离线（service worker + 缓存菜谱/步骤）—— 处理中**。INBOX 已升到 **v7**
-  （新任务 P2-3）；上一轮 P2-2 营养标准已实施完成并 push（f0e0754），Muse 已复核
-  **PASS（有条件）**。Jimmy 跨目录改源码授权在 v7 继续有效。
-- REVIEW.md 已是 **P2-2 PASS（有条件）**，**不是打回** → 本轮不消耗返工轮次。
-  REVIEW 附一个"小问题"：下轮 STATUS 需说明全量测试 17/17 与 P2-1(10)+P2-2(7+3)
-  计数口径差异（见本轮记录"REVIEW 小问题答复"）。
+- 任务：**P2-3 离线已实施完成并 push，等 Muse 复核**。INBOX v7（新任务 P2-3）
+  已处理；P2-2 营养标准 Muse 已复核 **PASS（有条件）**。Jimmy 跨目录改源码授权在
+  v7 继续有效。
+- REVIEW.md 仍是 **P2-2 PASS（有条件）**，**不是打回** → 不消耗返工轮次（仍 1/3）。
+  REVIEW 的"小问题"（测试计数口径）已在本轮 STATUS 答复：17/17 是 P2-2 当时实时值，
+  本轮基线已 20、加 4 = 24，随测试累积增长，未伪造。
+- 本轮（17:41）开局 pull 卡住 → ls-remote 初判"无变化" → push 被拒暴露 Muse 新推
+  REVIEW P2-2 PASS + INBOX v7 → 浅 fetch + rebase 同步（未 force push）→ 实施 P2-3。
+- P2-3 验收诚实边界：数据缓存 + SW 启用 + P0 不回归已验证；**真实菜谱断网内容渲染
+  与断网冷启动未验证**（本地无 Supabase；Flutter 3.47 内置 SW 不缓存 app shell），
+  详见 archive/2026-11-28_P2-3-offline.md §4，**不写"全部已完成"**。
 - 本轮（17:41 定时任务）开局 `git pull` 通道卡住被终止；`git ls-remote` 初查 tip =
   本地 HEAD = `5c1091c`，据此写过一条"无新进度"STATUS（本地提交 `dd78fcf`，未 push）。
   随后 push 被拒（non-fast-forward），浅 fetch 发现 Muse 期间推来两条：
@@ -1133,7 +1138,52 @@ fatal: fetch-pack: invalid index-pack output
   `72217e1 loop: receive INBOX v7 (P2-3 offline), P2-2 REVIEW PASS, reproduce offline-disabled state, answer test-count question`
 - `git ls-remote origin refs/heads/loop` 复核 = `72217e1...`（远端 tip 一致）。
 - `git status` 干净：仅 `?? .workbuddy/`（本地运行时目录，手册允许的例外）。
-- 本轮工作提交 hash：`72217e1e41829259162deaab16428a171749d1c7`。
+- 本轮工作提交 hash：`72217e1e41829259162deaab16428a171749d1c7`（接收 v7 轮）。
 - 注：本条验证结果回填后产生一个 backfill 提交，tip 前移一格；backfill 仅记录验证结果，无新增产出或任务进度。
+
+## 本轮轮询记录（2026-11-28 17:41 定时任务·第二段）—— P2-3 离线已实施
+
+### 改了什么（源码工作区 web_preview，一次一处，改完即测）
+- **改动 A 数据缓存层**：新增 `lib/core/services/offline_cache.dart`（shared_preferences
+  存/读详情原始 JSON，key `wm.offline.recipe.<slug>`，读写异常全吞不伪造）；
+  改 `recipe_repository.dart`：解析抽成 `detailFromRaw` 供在线/离线共用 + 在线成功后
+  写缓存 + catch（断网）读缓存还原；新增 `test/offline_cache_test.dart` 4 项。
+- **改动 B Service Worker 启用**：`web/flutter_bootstrap.js` 按 Flutter 3.47 SDK 格式
+  把 `serviceWorkerSettings: null` 改为 `{serviceWorkerVersion: {{...}}}`（保留 local
+  CanvasKit 规避 gstatic）；`web/index.html` 移除与启用冲突的"注销全部 SW + 清缓存 +
+  reload"自愈脚本。中途修复一次自身引入的语法错误（版本值被单引号包裹导致
+  `SyntaxError: Unexpected identifier 's'` 白屏）——已改回 SDK 无引号写法排除 P0 回归。
+
+### 验证（改完本地跑通，未部署）
+- `flutter test` **24/24 通过**（基线 20 + 离线 4）；改动文件 `flutter analyze`
+  **No issues found**；`flutter build web --release` 成功，SW 版本注入正确、
+  占位符残留 0、旧注销脚本残留 0、`node --check` 通过。
+- 真实 Chrome headless + CDP 实测：首帧 boot 屏消失、`__wmBootDone` 正常、无 error
+  异常 → **P0 首帧未回归**；断网后 SPA 菜谱路由保持、不被弹回登录/问卷、无 exception。
+- 离线缓存 4 项单测覆盖：round-trip / 无缓存返回 null / 还原数值一致 / 过敏原过滤。
+
+### 对照 INBOX v7 验收单
+- [x] 启用 Flutter service worker：按 SDK 3.47 格式启用并验证版本注入。
+- [x] 缓存菜谱和步骤数据：数据层实现 + 4 单测证明还原正确。
+- [~] 断网后已缓存菜谱能打开：逻辑与路由已验证，**真实内容渲染未验证**
+  （本地无 Supabase，provider 在缓存 catch 之前抛"Supabase 未配置"）；不写"已过"。
+- [x] 不回归 P0：首帧 bootGone、无 error、登录/访客代码未触碰。
+- [ ] 断网冷启动 / 线上真机：未验证。Flutter 3.47 内置 SW 只做注销不缓存 app shell，
+  断网冷启动会显示浏览器离线页；若要支持需另做 precache 方案，未自作主张实施。
+
+### 需要什么（等 Muse / Jimmy）
+- **等 Muse 对 P2-3 出 REVIEW**；请 Muse 定夺：断网冷启动是否要支持（需新增 precache
+  方案）还是当前"已加载后断网看缓存"即达标。
+- 部署 / 真机 / R2 凭证与 boto3 需 Jimmy 补齐。
+
+### 产出文件
+- 源码改动在源码工作区（非 git，改完本地验证即可）。归档
+  `archive/2026-11-28_P2-3-offline.md`（§4 诚实写清已验证/未验证边界）。
+- 浏览器证据：`.mobai-scratch/p23-e2e-online.png`、`.mobai-scratch/p23-e2e-offline.png`、
+  `.mobai-scratch/p23-e2e.mjs`。ZIP 无新产出、manifest.md 不变。
+- R2 实测凭证 5 项全 EMPTY、boto3 缺失 → 跳过，未上传，不伪造。
+
+### push 验证结果
+- 待本轮实施提交 push 后回填 hash 与验证结果。
 
 
