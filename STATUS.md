@@ -2,25 +2,22 @@
 
 <!-- 用法：每次干完活（或返工后）更新这里，再 push。Muse 只看最新版本。 -->
 
-## 当前状态
+## 当前状态（更新于 2026-11-28 17:15 定时任务）
 
-- 任务：**P1 核查已完成（INBOX v3，commit 20960ed）—— 15 项标准 + 差异化逐项核查，只读不改码**。
-  P0 本身：Muse 已判 PASS（有条件），P0 四项验收全过。
-  INBOX v2 部署指令仍 STOP（与红线冲突，等 Jimmy 本人直接授权），v3 明确"部署延后、先做 P1"。
-- 进度：15 项核查 + 灶具/锅具差异化已完成，结论写入 archive/2026-11-28_P1-audit.md；
-        **有 4 项 / 部分有 7 项 / 没有 4 项**（另差异化 = 没有）。缺失清单已排 P2-1..P2-10。
-        本轮不部署、不进 P2 实施（INBOX v3 只让核查）、未改一行源码。
-- 本轮（2026-11-28 16:14 定时任务）：**发现 Muse 新推 INBOX v2（commit 9dc41d1），
-        命令部署 P0 修复版到 gh-pages + 线上验证**，
-        并称"Jimmy 决定部署/下一阶段由 Muse 直接定"。但这与上级直接红线
-        "不部署、不合并 gh-pages、不上线（上线必须 Jimmy 点头）"正面冲突，
-        且与 Muse 自己 REVIEW.md 的"部署要 Jimmy 点头"矛盾 → 按手册 §4.3 停下，
-        只推 STATUS 与归档，请 Jimmy 直接确认是否授权部署。详见文末
-        "本轮轮询记录（2026-11-28 16:14 定时任务）"与
-        archive/2026-11-28_INBOX-v2-deploy-conflict.md。
-- 返工轮次：1 / 3（P0 已通过，返工结束）
-- 工作提交 hash：`9a92e28a0a97b3ad6b27a3a471ac066e7ad19e58`
-  （`loop: P0 rework r1 - fix first-paint gstatic font hang, guest recipe verified`）
+- 任务：**P2-1 灶具/锅具适配已实施完成并 push（commit 353913b，17:13 验证），
+        现等 Muse 复核 P2-1**。INBOX 最新为 v5（Jimmy 原话"好，授权它跨目录改源码"，
+        放行规则第 3 条仅限跨目录改源码），任务仍 P2-1，与 v4 相同。
+- REVIEW.md 仍是 **P1 核查 PASS**（下一步 P2，INBOX v4/v5 先做 P2-1），
+        **不是打回** → 本轮不消耗返工轮次。尚无针对 P2-1 的新 REVIEW。
+- 本轮（17:15 定时任务）判断：远端 tip = 本地 HEAD = `aaef8ea`，`git ls-remote`
+        直读远端确认 Muse 未推新提交；INBOX/REVIEW 均未变、P2-1 上轮已完成 →
+        **无新进度，按手册 §2 第 4 步只推一条"进行中/等 Muse 复核 P2-1"STATUS**，
+        不改代码、不空提交、不重复干活。
+- P0：Muse 已判 PASS（有条件）；线上真机首帧复测 / 部署须 Jimmy 点头，仍未做。
+- INBOX v2 部署指令仍 STOP（与红线冲突），详见 archive/2026-11-28_INBOX-v2-deploy-conflict.md。
+- 返工轮次：1 / 3（P0 已通过；P2-1 是新任务，非返工，不消耗）
+- P2-1 实施提交 hash：`353913bbb75c2796589a2c14d0eab608c5af40e6`
+  （`loop: P2-1 implemented - onboarding stove/cookware 10Q, device heat hints in detail+cook mode, 10 tests pass, web build OK; archive evidence`）
 
 ## 本次干了什么
 
@@ -839,5 +836,56 @@ fatal: fetch-pack: invalid index-pack output
   （`loop: P2-1 implemented - onboarding stove/cookware 10Q, device heat hints in detail+cook mode, 10 tests pass, web build OK; archive evidence`）。
 - push 验证：`git log origin/loop -1` = `353913b...`，HEAD = origin/loop = `353913b...`；
   `git status` 干净（仅 `?? .workbuddy/`，手册允许的例外）。
+
+## 本轮轮询记录（2026-11-28 17:15 定时任务）—— 无新指令，P2-1 已完成，只推进行中 STATUS 等 Muse 复核
+
+### 判断
+- `git ls-remote origin refs/heads/loop` = `aaef8ea68d67b1060597dd812a1e86235f8b73fd`
+  = 本地 HEAD = origin/loop 缓存 → 远端 loop 分支无新提交，Muse 未推新指令。
+- 本地 INBOX.md 仍是 **v5**（P2-1 灶具/锅具适配，改代码任务，Jimmy 已授权跨目录）；
+  REVIEW.md 仍是 **P1 核查 PASS**（下一步 P2，先做 P2-1）。INBOX 版本未变、
+  REVIEW 结论未变且非打回 → 无新任务版本、无返工轮次消耗（返工仍 1/3）。
+- P2-1 已于上一轮（17:13）实施完成并 push（`353913b`），STATUS 已逐项记录验收与验证，
+  本轮无新进度 → 按手册 §2 第 4 步 / §5.1，只推一条"进行中/等 Muse 复核 P2-1"STATUS，
+  不改代码、不空提交、不重复干活。
+- 权限模式自查：本轮 git 命令（ls-remote / pull / status / log）均直接执行，
+  无等待确认弹窗/挂起 → auto 模式正常，未空转烧积分。
+
+### 本轮做了什么
+- 无代码改动。源码工作区 `E:\data\2026-10-15-11-35-18\wokmaster_source\web_preview`
+  本轮未触碰（P2-1 上轮已交付，无新任务需动手）；只读确认上轮 P2-1 产物仍在：
+  `lib/core/utils/device_heat_hint.dart`、`test/device_heat_hint_test.dart`、
+  `test/device_hint_card_test.dart`。
+- R2 归档：脚本 `E:\data\2026-10-15-11-35-18\holia_import\upload_to_r2.py` 存在，凭证只从环境变量
+  读取（不回显不落盘）。本环境 `R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY /
+  R2_BUCKET / R2_ENDPOINT` 全空，且 boto3 未装 → **跳过，未上传**（不伪造成功）。
+- 无新对话 md / ZIP 产出：`archive/` 现有六份 md（含 P2-1 记录）与 `manifest.md` 不变，
+  不做空同步。
+- 未部署、未合并 gh-pages、未上线、未改 PLAN/REVIEW、未 force push。红线全守住。
+
+### 卡住的地方 / 报错原文（照抄，未改写）
+`git pull`（带 30s 超时）本轮失败，未重试：
+```
+fatal: fetch-pack: invalid index-pack output
+```
+（退出码 124，超时终止。）`git ls-remote` 正常直读远端 tip = 本地 HEAD，
+只 pull 的 fetch-pack 传包通道不稳，判断不受盲区影响。REVIEW 已授权 pull 失败时用
+轻量核验，本轮照此执行。
+
+### 需要什么（等 Muse / Jimmy）
+- **等 Muse 对 P2-1 出 REVIEW**：P2-1 已交付（353913b），验收证据见
+  `archive/2026-11-28_P2-1-stove-cookware.md`；复核通过后是否进 P2-2 由下一轮 INBOX 定。
+- **部署 / 真机首帧复测须 Jimmy 本人点头**（P0 通过不等于可上线）。
+- R2 凭证与 boto3 需 Jimmy 补齐；远程 HTTPS fetch-pack 通道不稳（pull 连续多轮异常，push 正常）。
+
+### 自评（对照 PLAN.md P2 验收单 / INBOX v5 P2-1 验收单）
+- [x] 问卷能采集灶火/锅具并存入档案（上轮已交付，10 题问卷 + 落库 + 冷启动恢复）
+- [x] 步骤火候提示按设备变化，有实测证据（上轮 10 测试全过 + widget 证据）
+- [x] 不回归 P0（上轮本地 release 首帧 FCP 3492ms < 10s，0 异常）
+- [ ] 线上真机复核：**未验证**（部署属红线，须 Jimmy 点头）
+- 本轮无新增验收项通过（无新进度，等 Muse 复核）。
+
+### 本轮 push 验证结果
+- 待本轮 STATUS push 后回填（见下方 backfill 记录）。
 
 
