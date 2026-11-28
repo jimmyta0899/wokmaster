@@ -7,6 +7,9 @@
 - 任务：v1 / P0 首帧性能返工（REVIEW 打回，返工第 1 轮 / 共 3 轮）
 - 进度：首帧根因已定位并修复、干净 release 重编验证通过；访客公开菜谱实测通过。
         等 Muse 复核。P1 未开始（REVIEW 未明确通过前不动）。
+- 本轮（2026-11-28 15:10 定时任务）：INBOX 仍 v1、无新任务；REVIEW 仍为打回第 1 轮，
+        打回两项上轮已完成并 push，无新返工可做。本轮仅推"进行中/等复核"STATUS，
+        不重复干活、不进 P1。git pull 两次失败，详见文末"本轮轮询记录"。
 - 返工轮次：1 / 3
 - 工作提交 hash：`9a92e28a0a97b3ad6b27a3a471ac066e7ad19e58`
   （`loop: P0 rework r1 - fix first-paint gstatic font hang, guest recipe verified`）
@@ -73,3 +76,49 @@ Apache 2.0）。引擎发现 App 已声明 Roboto 就不再注册 gstatic URL。
 - `9a92e28a0a97b3ad6b27a3a471ac066e7ad19e58` — P0 返工第 1 轮全部产出
   （STATUS + 归档记录 + zip 清单），已 push 到 origin/loop 并验证 tip 一致。
 - `.workbuddy/` 为本地运行时目录，未纳入提交。
+
+## 本轮轮询记录（2026-11-28 15:10 定时任务）
+
+### 判断
+- INBOX.md 版本 v1，与 STATUS 上次处理版本一致 → 无新任务。
+- REVIEW.md 结论仍是"打回（返工第 1 轮 / 共 3 轮）"，打回两项（首帧首屏、访客实测）
+  上轮已完成并 push（hash 9a92e28 / 2258826），本轮无新返工意见。
+- REVIEW 未明确"通过"，按 INBOX v1 不进 P1。
+- 按手册第 5 章，无新进度也推一条进行中 STATUS。
+
+### 本地 git 状态（纯本地命令，未触发网络）
+- HEAD = `2258826`（loop: backfill commit hash 9a92e28 into STATUS (P0 rework r1)）
+- origin/loop 本地缓存 = `2258826`，与 HEAD 一致
+- `git status --short` = `?? .workbuddy/`（仅本地运行时目录），工作区干净
+- 当前分支 = loop
+
+### 卡住的地方 / 报错原文（照抄，未改写）
+`git pull` 连续两次失败，无法确认远程 loop 分支是否有 Muse 新推的 REVIEW/INBOX：
+
+第 1 次（`git pull`，耗时约 3m56s）：
+```
+error: RPC failed; curl 56 schannel: server closed abruptly (missing close_notify)
+error: 5113 bytes of body are still expected
+fetch-pack: unexpected disconnect while reading sideband packet
+fatal: early EOF
+fatal: fetch-pack: invalid index-pack output
+```
+
+第 2 次（`git -c http.postBuffer=524288000 pull --no-rebase`，卡住 8m40s 无任何输出，
+已手动终止）：
+```
+（无输出，进程挂起，达到"同一假设试两次没用就停下"阈值后终止）
+```
+
+### 试过什么
+1. 普通 `git pull` —— RPC failed / early EOF，失败。
+2. 加大 `http.postBuffer` 到 512MB + `--no-rebase` 再 pull —— 挂起无输出，终止。
+
+### 需要什么
+- 远程 loop 分支网络通道不稳定（HTTPS + token，schannel 报错）。本轮 STATUS 的 push
+  若同样失败，将在下方记录原文。请 Jimmy/Muse 检查网络或远程可达性；本环境无法确认
+  远程是否已有新的复核结论。
+- 未部署、未合并 gh-pages、未上线，红线守住。
+
+### 本轮 push 验证结果
+（见下方提交记录，push 后回填）
