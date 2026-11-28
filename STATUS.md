@@ -666,6 +666,13 @@ hint: Updates were rejected because the remote contains work that you do not hav
 - R2 凭证与 boto3 需 Jimmy 补齐；远程 HTTPS fetch-pack 通道不稳（pull 连续多轮异常，push 正常）。
 
 ### 本轮 push 验证结果
-- （待回填）
+- push 成功：`92b2dde..81101f6  loop -> loop`
+- `git log origin/loop -1` =
+  `81101f6cb1295b1461f4dffa5c0003820082b36a loop: status - INBOX v4/P2-1 detected (code task); current workspace is loop dir not source tree - STOP per rule 3, await Jimmy workspace decision; rebase Muse INBOX v4 + REVIEW P1 PASS`
+- `git ls-remote origin refs/heads/loop` 复核 = `81101f6...`（远程 tip 一致）
+- HEAD = origin/loop = `81101f6cb1295b1461f4dffa5c0003820082b36a`
+- `git status` 干净：仅 `?? .workbuddy/`（本地运行时目录，手册允许的例外）
+- 本轮工作提交 hash：`81101f6cb1295b1461f4dffa5c0003820082b36a`
+- 注：本条验证结果回填后会产生 backfill 提交，tip 前移一格；backfill 只记录验证结果，无新增产出或任务进度。
 
 
