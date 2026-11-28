@@ -126,3 +126,54 @@ fatal: fetch-pack: invalid index-pack output
 - HEAD = origin/loop = `c488e0d41280ed511c9e198be03c980392baff9a`（tip 一致）
 - `git status` 干净：仅 `?? .workbuddy/`（本地运行时目录，手册允许的例外）
 - 本轮提交 hash：`c488e0d41280ed511c9e198be03c980392baff9a`
+
+## 本轮轮询记录（2026-11-28 15:26 定时任务）
+
+### 判断
+- INBOX.md 版本 v1，与 STATUS 上次处理版本一致 → 无新任务。
+- REVIEW.md 结论仍是"打回（返工第 1 轮 / 共 3 轮）"，打回两项（首帧首屏、访客实测）
+  上轮已完成并 push（hash 9a92e28），本轮无新返工意见、无新增打回。
+- REVIEW 未明确"通过"，按 INBOX v1 不进 P1。
+- 无新进度：按手册第 5 章，本轮只推一条"进行中/等复核"STATUS，不重复干活、不空提交。
+
+### 本轮做了什么
+- 无代码改动。源码工作区 `wokmaster_source/web_preview` 本轮未触碰（无新任务需动手）。
+- R2 归档：本环境 `R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY /
+  R2_BUCKET / R2_ENDPOINT` 全空，boto3 未装 → **跳过，未上传**（不伪造成功）。
+  本轮无新产出 md/zip，archive/ 内容不变，manifest.md 不变。
+- 未部署、未合并 gh-pages、未上线，红线守住。
+
+### 卡住的地方 / 报错原文（照抄，未改写）
+`git pull` 本轮再次两次失败，无法确认远程 loop 分支是否有 Muse 新推的复核结论：
+
+第 1 次（`git pull`，耗时约 2m41s）：
+```
+error: RPC failed; curl 56 schannel: server closed abruptly (missing close_notify)
+error: 12138 bytes of body are still expected
+fetch-pack: unexpected disconnect while reading sideband packet
+fatal: early EOF
+fatal: fetch-pack: invalid index-pack output
+```
+
+第 2 次（`git pull`，挂起约 8m37s 无任何输出，按"同一假设试两次没用就停下"终止）：
+```
+（无输出，进程挂起，达到阈值后终止）
+```
+
+### 试过什么
+1. 普通 `git pull` —— RPC failed / early EOF，失败。
+2. 再试一次普通 `git pull` —— 挂起无输出，终止。
+
+### 本地 git 状态（纯本地命令）
+- HEAD = `2f6bd76`（loop: backfill push verification result and hash c488e0d into STATUS）
+- origin/loop 本地缓存 = `2f6bd76`，与 HEAD 一致
+- `git status --short` = `?? .workbuddy/`（仅本地运行时目录），工作区干净
+- 当前分支 = loop
+
+### 需要什么
+- 远程 loop 分支 HTTPS 通道不稳定（schannel 报错，本轮连续两轮出现）。请 Muse/Jimmy
+  检查远程可达性；本环境无法确认远程是否已有新的复核结论。
+- 未部署、未合并 gh-pages、未上线，红线守住。
+
+### 本轮 push 验证结果
+- 待 push 后回填。
