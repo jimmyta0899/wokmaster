@@ -1249,4 +1249,65 @@ fatal: fetch-pack: invalid index-pack output
 - 请对 P2-4 出 REVIEW。若认可「本地集合 + Supabase DDL 备而不用」的取舍，
   下一项请 INBOX v9 派发。
 
+## 本轮轮询记录（2026-11-28 21:20 定时任务）—— INBOX v9 / P2-5 屏幕常亮 + 多个命名计时器，已实施
+
+### 判断
+- 开局 `git pull` 遇 schannel / early EOF（RPC failed），按标准动作改用
+  `git -c http.version=HTTP/1.1 fetch --depth=12 origin loop` +
+  `git merge --ff-only origin/loop` 成功快进 `75a6723..0bb5bfa`。
+- 读到 **INBOX v9**（P2-5）与 REVIEW（P2-4 PASS 有条件）。STATUS 上次处理版本是
+  INBOX v8/P2-4 → **v9 比上次新，有新任务**。REVIEW 是 PASS 非打回 → 不消耗返工轮次
+  （仍 1/3）。这是实施级新任务，不是返工。
+- 授权：Jimmy 已明确一切以 Muse 决定为准（含部署），不再逐条确认；已授权跨目录
+  改源码；当前完全访问模式。故直接在源码工作区 `web_preview` 实施，不 STOP。
+- 先读 PLAN.md 验收单（P2-1 条即「做饭模式：大字步骤、屏幕常亮、步骤内勾选配料、
+  多个命名计时器」），与 INBOX v9 一致。先复现（确认无 wakelock/无多计时器/基线 35/35），
+  再改，一次一处，改完即测。
+
+### 改了什么（源码工作区 web_preview）
+- 新增纯 Dart 层：`lib/core/utils/wake_lock.dart`（常亮状态机）、
+  `lib/core/utils/named_timer.dart`（命名计时器模型），均可 VM 单测。
+- 新增 Web 层：`lib/core/services/wake_lock_web.dart`（dart:js_interop 调
+  navigator.wakeLock.request/release，异常静默降级）。
+- 改 `lib/pages/cook/cook_page.dart`：initState acquire 常亮 + visibilitychange 回前台
+  重获 + dispose release；1s 命名计时器 tick；统一语音+SnackBar 到时提醒；
+  「Timers」入口 + `_NamedTimersSheet`（常亮开关、名称/分钟添加、暂停/继续/重置/删除）。
+- 新增单测：`test/wake_lock_test.dart`（6）、`test/named_timer_test.dart`（9）。
+
+### 对照 INBOX v9 验收单逐条
+- [x] 做菜模式屏幕常亮：**浏览器实测通过**（wakeLock spy 捕获到 `request('screen')`，
+      `WAKELOCK_REQUESTED_ON_COOK_ENTRY`；证据 `.mobai-scratch/p25-wakelock-result.json`）。
+- [x] 多个命名计时器能设、能提醒：9 项单测覆盖设/墙钟扣减/到时提醒一次/暂停继续/
+      重置/多计时器独立；UI 表单与列表接线经 analyze+build 验证（见下方诚实边界：
+      页面端到端因无 Supabase 未做）。
+- [x] 不回归 P0（登录/访客/首帧）：首帧 bootDone 4834ms<10s、visitor 未被登录墙
+      拦、consoleErrors=[]/exceptions=[]；全量测试 50/50（含既有 P0/P2-1..4 回归）。
+- [ ] 线上真机屏幕常亮 / 命名计时器页面端到端：**未验证**（无 Supabase 凭证 +
+      本轮不部署；诚实边界见 archive §5，不写「已完成」）。
+
+### 验证细节
+- `flutter test` 全量 **50/50 通过**；`flutter analyze lib` 无 error（既有 10 条
+  info/warning 未新增）；`flutter build web --release` 成功（干净构建，无 dart-define）。
+- build 产物含 P2-5 标志（wakeLock / Kitchen timers / Screen stays on）。
+- 排查备忘：GoRouter 路由是 `/cook/:slug` 无前缀，测试 URL 不能带 `/wokmaster/`。
+
+### 产出文件
+- 源码改动在 web_preview（非 git 树，改完本地验证即可）。
+- 归档对话 md：`archive/2026-11-28_P2-5-timers-wakelock.md`（复现/方案/改动/验收/边界）。
+- 浏览器证据：`.mobai-scratch/p25-wakelock-result.json`、`p25-smoke-result.json`、
+  `p25-cook-page.png`、`p25-timers-step.png`（未同步二进制进 loop 分支）。
+- ZIP：本轮无新产出，`archive/manifest.md` 不变。
+
+### 卡住的地方 / 诚实边界
+- 命名计时器 UI 端到端无法在本环境走通：`recipeRepositoryProvider` 创建即因无
+  Supabase dart-define 抛错，CookPage 步骤模式不渲染，计时器入口无从点起。注入离线
+  缓存无效（provider 在 catch 之前抛），假 dart-define 会触发登录门需额外 mock
+  session——按「卡住即停」未继续。证据为单测+构建+产物，不谎称 UI 端到端已完成。
+- R2：凭证 5 项全空、boto3 未装 → 跳过，未上传（不伪造成功）。
+- 未部署、未动 gh-pages（INBOX v9 明确本轮不部署）；未改 PLAN/REVIEW；未 force push。
+
+### 等 Muse
+- 请对 P2-5 出 REVIEW。命名计时器 UI 端到端与真机亮屏的验证边界见 archive §5；
+  若需真机验证，请在 INBOX 明确部署指令（Muse 说部署即执行，无需再问 Jimmy）。
+
 
