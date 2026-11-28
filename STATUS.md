@@ -600,4 +600,72 @@ hint: Updates were rejected because the remote contains work that you do not hav
 - 本轮工作提交 hash：`e6fce9d9f42ebd363e1c310e2a27266d4a3705ac`
 - 注：本条验证结果回填后会产生 backfill 提交，tip 前移一格；backfill 只记录验证结果，无新增产出或任务进度。
 
+## 本轮轮询记录（2026-11-28 16:40 定时任务）—— 检测到新任务 INBOX v4/P2-1，但当前会话工作区非源码目录，停下待处理
+
+### 判断（本轮有状态变化：INBOX v3 → v4，REVIEW P1 → PASS）
+- 开局 `git pull` 失败（schannel / early EOF）；`git ls-remote` = `eecb47d` = 本地 HEAD，
+  先按"无变化"写好 STATUS 并提交。
+- **push 被拒（non-fast-forward）→ 发现 Muse 期间推来两个新提交**：
+  - `02e26c5`：INBOX **v3 → v4**，新任务 **P2-1 灶具/锅具适配**（差异化独占机会，
+    要改代码：问卷加 2 题存 stove_type/cookware、步骤按设备映射火候提示、
+    详情页+cook mode 展示、自测换设备提示变化 + 回归 P0）。
+  - `92b2dde`：REVIEW 对 P1 核查判 **PASS**，明确"下一步 P2，INBOX v4 先做 P2-1"。
+- P2-1 是**需要改代码**的任务，不是打回返工（返工轮次仍 1/3，不消耗）。
+- 按 §5.4 浅 `fetch --depth=5 origin loop` + `git rebase origin/loop` 成功同步，
+  未 force push；本地 INBOX 已 v4、REVIEW 已 P1 PASS。
+- 权限模式自查：git 命令均直接执行，无等待确认弹窗 → auto 模式正常。
+
+### 关键卡点：当前工作区不是源码目录（按用户规则第 3 条停下）
+- 用户明确规则："改代码在源码工作区做（`E:\data\2026-10-15-11-35-18\wokmaster_source\web_preview`），
+  改完本地跑通。**若当前工作区不是源码目录，先停下来告诉我，不要动手。**"
+- 本自动化会话的 Workspace Folder = `E:\data\2026-10-15-11-35-18\wokmaster-loop`（loop 目录，
+  只读写循环文件），**不是源码工作区**。
+- 因此本轮**不进源码工作区、不改一行代码**，把 P2-1 原样挂在 STATUS，等 Jimmy 处理：
+  要么把定时任务的工作区切到 `web_preview`，要么明确授权在本会话跨目录改源码。
+- 源码工作区 `web_preview` 本轮只读确认存在，未触碰。
+
+### 本轮做了什么
+- 无代码改动。PLAN.md 只读核对：P2 差异化确有"灶具/锅具适配"一条，与 INBOX v4 一致。
+- R2 归档：脚本 `E:\data\2026-10-15-11-35-18\holia_import\upload_to_r2.py` 存在，
+  凭证只从环境变量读取（不回显不落盘）。本环境 `R2_ACCOUNT_ID / R2_ACCESS_KEY_ID /
+  R2_SECRET_ACCESS_KEY / R2_BUCKET / R2_ENDPOINT` 全空，且 boto3 未装
+  （`ModuleNotFoundError: No module named 'boto3'`）→ **跳过，未上传**（不伪造成功）。
+- 无新对话 md / ZIP 产出：`archive/` 现有五份 md（含 P1-audit）与 `manifest.md` 不变，
+  不做空同步。
+- 未部署、未合并 gh-pages、未上线、未进 P2 实施、未改 PLAN/REVIEW、未 force push。红线全守住。
+
+### 卡住的地方 / 报错原文（照抄，未改写）
+`git pull` 本轮失败（耗时约 2m01s）：
+```
+error: RPC failed; curl 56 schannel: server closed abruptly (missing close_notify)
+error: 758 bytes of body are still expected
+fetch-pack: unexpected disconnect while reading sideband packet
+fatal: early EOF
+fatal: fetch-pack: invalid index-pack output
+```
+首次 `git push` 被拒：
+```
+ ! [rejected]        loop -> loop (fetch first)
+error: failed to push some refs to 'https://github.com/jimmyta0899/wokmaster.git'
+hint: Updates were rejected because the remote contains work that you do not have locally.
+```
+原因：Muse 期间推来 INBOX v4 + REVIEW P1 PASS；按 §5.4 浅 fetch + rebase 后已解决。
+
+### 试过什么
+1. `git pull` —— RPC failed / schannel / early EOF（本轮 1 次，不重试）。
+2. `git ls-remote origin refs/heads/loop` —— 开局 `eecb47d`；push 被拒后复查 `92b2dde`（发现新提交）。
+3. `git -c http.version=HTTP/1.1 fetch --depth=5 origin loop` + `git rebase origin/loop` —— 成功同步。
+
+### 需要什么（卡点，等 Jimmy）
+- **让本会话具备改代码的合法工作区**：把定时任务工作区切到
+  `E:\data\2026-10-15-11-35-18\wokmaster_source\web_preview`，或明确授权本会话跨目录改源码。
+  在此之前 P2-1 不启动（用户规则第 3 条：当前工作区非源码目录，不动手）。
+- P2-1 验收（INBOX v4）：问卷采集灶火/锅具并存档案；步骤火候提示按设备变化有实测证据；
+  不回归 P0（登录/访客/首帧）。不做 P2-8 一键下单。
+- 部署 / 真机首帧复测须 Jimmy 本人点头（P0 通过不等于可上线）。
+- R2 凭证与 boto3 需 Jimmy 补齐；远程 HTTPS fetch-pack 通道不稳（pull 连续多轮异常，push 正常）。
+
+### 本轮 push 验证结果
+- （待回填）
+
 
