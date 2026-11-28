@@ -121,4 +121,8 @@ fatal: fetch-pack: invalid index-pack output
 - 未部署、未合并 gh-pages、未上线，红线守住。
 
 ### 本轮 push 验证结果
-（见下方提交记录，push 后回填）
+- push 成功：`2258826..c488e0d  loop -> loop`
+- `git log origin/loop -1` = `c488e0d loop: status - no new task, P0 rework r1 waiting Muse review; record pull network failure`
+- HEAD = origin/loop = `c488e0d41280ed511c9e198be03c980392baff9a`（tip 一致）
+- `git status` 干净：仅 `?? .workbuddy/`（本地运行时目录，手册允许的例外）
+- 本轮提交 hash：`c488e0d41280ed511c9e198be03c980392baff9a`
