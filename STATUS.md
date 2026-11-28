@@ -4,13 +4,18 @@
 
 ## 当前状态
 
-- 任务：v1 / P0 首帧性能返工 —— **Muse 已判 PASS（有条件），P0 四项验收全过**。
+- 任务：**STOP —— INBOX v2 部署指令与上级红线冲突，等 Jimmy 直接确认**。
+  P0 本身：Muse 已判 PASS（有条件），P0 四项验收全过。
 - 进度：首帧根因已消除、干净 release 重编验证通过；访客公开菜谱实测通过。
-        P1 不自动开始，等 Jimmy 确认下一阶段再动；部署/真机复测须 Jimmy 点头。
-- 本轮（2026-11-28 16:06 定时任务）：INBOX v1 未变，REVIEW 仍为 P0 PASS（有条件，21e24dc），
-        远程 tip = 本地 HEAD（5399b0c）无新指令。无新进度，按手册只推一条"进行中/等确认"
-        STATUS；不进 P1、不部署。git pull 挂起 5m44s 后终止，改用 ls-remote 核验远程状态。
-        详见文末"本轮轮询记录（2026-11-28 16:06 定时任务）"。
+        P1 不自动开始；部署/上线必须 Jimmy 点头 —— 本轮不部署、不进 P1。
+- 本轮（2026-11-28 16:14 定时任务）：**发现 Muse 新推 INBOX v2（commit 9dc41d1），
+        命令部署 P0 修复版到 gh-pages + 线上验证**，
+        并称"Jimmy 决定部署/下一阶段由 Muse 直接定"。但这与上级直接红线
+        "不部署、不合并 gh-pages、不上线（上线必须 Jimmy 点头）"正面冲突，
+        且与 Muse 自己 REVIEW.md 的"部署要 Jimmy 点头"矛盾 → 按手册 §4.3 停下，
+        只推 STATUS 与归档，请 Jimmy 直接确认是否授权部署。详见文末
+        "本轮轮询记录（2026-11-28 16:14 定时任务）"与
+        archive/2026-11-28_INBOX-v2-deploy-conflict.md。
 - 返工轮次：1 / 3（P0 已通过，返工结束）
 - 工作提交 hash：`9a92e28a0a97b3ad6b27a3a471ac066e7ad19e58`
   （`loop: P0 rework r1 - fix first-paint gstatic font hang, guest recipe verified`）
@@ -358,5 +363,70 @@ REVIEW 已授权 pull 失败时改用轻量核验，本轮照此执行。
 - 本轮工作提交 hash：`4b94d3ac6c200da683e95b9d69e7459d25de564a`
 - 注：本条验证结果回填后会产生一个 backfill 提交，tip 会前移一格；backfill 提交只是
   记录验证结果，无新增产出或任务进度。
+
+## 本轮轮询记录（2026-11-28 16:14 定时任务）—— INBOX v2 部署指令冲突，STOP
+
+### 判断（本轮有状态变化：INBOX v1 → v2，新任务 = 部署，但与红线冲突）
+- 开局 `git pull`、`git fetch`（含 HTTP/1.1）失败：`fatal: unable to access ... Empty reply from server`，
+  但 `curl https://github.com` = 200（网络通，是 git 传包通道问题）。
+- `git ls-remote origin refs/heads/loop` = `9dc41d1c4eaf72a0d673998627721bd18981bcb6`，
+  本地 HEAD = `8bfbf35` → 远程新一格。按 REVIEW 授权的备用办法从
+  raw.githubusercontent.com 读回四个分支文件。
+- 新提交 `9dc41d1`（2026-11-28T08:15:40Z）**只改 INBOX.md**：版本 v1 → **v2**。
+  REVIEW.md 未变（仍是 P0 PASS 有条件）；PLAN.md 未变。
+- INBOX v2 任务：把 P0 修复版部署到 gh-pages + 线上验证首帧<10s/登录/注册/访客三链路，
+  并称"Jimmy 决定：按最快路径走，不再逐项问，部署和下一阶段由 Muse 直接定"。
+- **冲突**：上级直接红线"永远不做：不部署、不合并 gh-pages、不上线（上线必须 Jimmy 点头）"，
+  且 Muse 自己 REVIEW.md 写"部署要 Jimmy 点头。P0 通过不等于可以上线"。
+  INBOX v2 里"Jimmy 已授权"是 Muse 转述，不是 Jimmy 本人直接确认。
+- 按手册 §4.3（需要 Jimmy 才能决定的事 → 立刻停下）与第 6 章红线：
+  **本轮不部署、不合并 gh-pages、不上线、不进 P1**，只推 STATUS + 归档，等 Jimmy 直接确认。
+
+### 远程同步（pull 失败，浅 fetch + 快进成功）
+- `git -c http.version=HTTP/1.1 fetch --depth=3 origin loop` 成功，
+  `git merge --ff-only origin/loop` 快进 `8bfbf35..9dc41d1`。
+- INBOX.md 是 Muse 原文，workbuddy **未改**；PLAN.md / REVIEW.md 未动（红线）。
+
+### 本轮做了什么
+- 无代码改动。源码工作区 `wokmaster_source/web_preview` 存在但未触碰。
+- 归档：新增对话 md `archive/2026-11-28_INBOX-v2-deploy-conflict.md`（三方指令对照、冲突分析、
+  待 Jimmy 确认的二选一答复）。无新 ZIP，`archive/manifest.md` 不变。
+- R2：脚本 `E:\data\2026-10-15-11-35-18\holia_import\upload_to_r2.py` 存在，凭证只走环境变量
+  （不回显不落盘）。本环境 `R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY /
+  R2_BUCKET / R2_ENDPOINT` 全空，boto3 未装 → **跳过，未上传**（不伪造成功）。
+- 权限模式自查：本轮所有 git 命令直接执行，无等待确认弹窗/挂起 → 判断为 auto 模式正常。
+- 未部署、未合并 gh-pages、未上线、未进 P1，红线守住。
+
+### 卡住的地方 / 报错原文（照抄，未改写）
+`git pull` / `git fetch`（含 HTTP/1.1）本轮失败：
+```
+fatal: unable to access 'https://github.com/jimmyta0899/wokmaster.git/': Empty reply from server
+```
+`curl -o /dev/null -w "%{http_code}" https://github.com` = `200` → 网络通，仅 git 传包通道不稳。
+注：REVIEW 已授权 pull 失败时用 raw.githubusercontent.com 读分支文件，本轮照此执行，未干等。
+
+### 试过什么
+1. `git pull`（默认 + HTTP/1.1）—— Empty reply from server，失败。
+2. `git fetch origin loop`（HTTP/1.1）—— 同样失败。
+3. `git ls-remote origin refs/heads/loop` —— 成功，发现远程新提交 9dc41d1。
+4. `curl` raw.githubusercontent.com 读四个分支文件 —— 成功，读到 INBOX v2。
+5. `git fetch --depth=3 origin loop` + `git merge --ff-only` —— 成功，快进同步 INBOX.md。
+
+### 需要什么（Jimmy 二选一）
+- **若确认真授权部署**：由 Jimmy 本人直接回复确认，或在 loop 分支写一条明确"Jimmy 授权部署"
+  的 REVIEW/INBOX；WorkBuddy 下一轮再执行 gh-pages 部署与线上验证。
+- **若部署仍须真人点头**：维持现状，WorkBuddy 继续停在 P0 PASS，不进 P1、不部署。
+- R2 凭证与 boto3 仍需补齐，届时补传归档。
+
+### 自评（对照 PLAN.md P0 验收单）
+- [x] 登录页邮箱/密码框正常显示可输入；Sign in 可点；登录成功进首页（上轮通过，未回归）
+- [x] 注册页三框 + Create account 可点（上轮通过，未回归）
+- [x] "Keep reading without an account" 正常渲染可点（上轮通过，本轮复测仍可点）
+- [x] 访客点进公开菜谱能正常看（上轮实测通过）
+- [x] 首帧 <10s 的根因已消除：本机干净构建 bootDone 777ms、gstatic 请求归零
+- [ ] 线上真机首帧 <10s：**未验证**（部署属红线，等 Jimmy 授权后复测）
+- [ ] INBOX v2 新增的线上部署/验证任务：**未执行**（与上级红线冲突，STOP 待确认）
+
+### 本轮 push 验证结果（见文末回填）
 
 
