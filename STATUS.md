@@ -7,9 +7,10 @@
 - 任务：v1 / P0 首帧性能返工（REVIEW 打回，返工第 1 轮 / 共 3 轮）
 - 进度：首帧根因已定位并修复、干净 release 重编验证通过；访客公开菜谱实测通过。
         等 Muse 复核。P1 未开始（REVIEW 未明确通过前不动）。
-- 本轮（2026-11-28 15:10 定时任务）：INBOX 仍 v1、无新任务；REVIEW 仍为打回第 1 轮，
+- 本轮（2026-11-28 15:45 定时任务）：INBOX 仍 v1、无新任务；REVIEW 仍为打回第 1 轮，
         打回两项上轮已完成并 push，无新返工可做。本轮仅推"进行中/等复核"STATUS，
-        不重复干活、不进 P1。git pull 两次失败，详见文末"本轮轮询记录"。
+        不重复干活、不进 P1。git pull 再次失败，但 ls-remote 已确认远程 tip = 本地 HEAD
+        （b66f4d1），无 Muse 新推内容；详见文末"本轮轮询记录"。
 - 返工轮次：1 / 3
 - 工作提交 hash：`9a92e28a0a97b3ad6b27a3a471ac066e7ad19e58`
   （`loop: P0 rework r1 - fix first-paint gstatic font hang, guest recipe verified`）
@@ -183,3 +184,53 @@ fatal: fetch-pack: invalid index-pack output
 - 本轮工作提交 hash：`16b846c71804f41cf94d639b369e0dad5a437219`
 - 注：本条验证结果回填后会产生一个 backfill 提交，tip 会前移一格；backfill 提交只是
   记录验证结果，无新增产出或任务进度。
+
+## 本轮轮询记录（2026-11-28 15:45 定时任务）
+
+### 判断
+- INBOX.md 版本 v1，与 STATUS 上次处理版本一致 → 无新任务。
+- REVIEW.md 结论仍是"打回（返工第 1 轮 / 共 3 轮）"，打回两项（首帧首屏、访客实测）
+  上轮已完成并 push（hash 9a92e28），本轮无新返工意见。
+- REVIEW 未明确"通过"，按 INBOX v1 不进 P1。
+- 无新进度：按手册第 5 章，本轮只推一条"进行中/等复核"STATUS，不重复干活、不空提交。
+
+### 远程状态（ls-remote 轻量核验成功）
+- `git ls-remote origin refs/heads/loop` 返回 `b66f4d17e246a9b3c8c9f4cb16e9637025595926`
+  = 本地 HEAD = origin/loop 缓存 → 远程 loop 分支无新提交，Muse 未推新的 REVIEW/INBOX。
+- 虽然 `git pull` 仍失败（schannel 断连，详见下方），轻量 ref 查询证明远程内容与本地一致，
+  本轮判断建立在最新远程状态上，不存在"看不到新指令"的盲区。
+
+### 本轮做了什么
+- 无代码改动。源码工作区 `wokmaster_source/web_preview` 本轮未触碰（无新任务需动手）。
+- R2 归档：脚本位于 `E:\data\2026-10-15-11-35-18\holia_import\upload_to_r2.py`，凭证只从环境变量
+  读取（不回显不落盘）。本环境 `R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY /
+  R2_BUCKET` 全空，且 boto3 未安装 → **跳过，未上传**（不伪造成功）。本轮无新产出 md/zip，
+  archive/ 内容与 manifest.md 不变。
+- 未部署、未合并 gh-pages、未上线，红线守住。
+
+### 卡住的地方 / 报错原文（照抄，未改写）
+`git pull`（耗时约 2m47s）：
+```
+error: RPC failed; curl 56 schannel: server closed abruptly (missing close_notify)
+error: 4082 bytes of body are still expected
+fetch-pack: unexpected disconnect while reading sideband packet
+fatal: early EOF
+fatal: fetch-pack: invalid index-pack output
+```
+注：这是连续第 3 轮 pull 遇同样 schannel 错误；但 `git ls-remote`（4s）正常返回，说明远程可读，
+只是 pull 走 fetch-pack 传包时断连。按"同一假设试两次没用就停下"，本轮 pull 只试一次，
+改用 ls-remote 核验远程状态，不再重试 pull。
+
+### 试过什么
+1. `git pull` —— RPC failed / early EOF（schannel），失败（本轮 1 次）。
+2. `git ls-remote origin refs/heads/loop` —— 成功，确认远程 tip 无变化。
+
+### 需要什么
+- 远程 loop 分支 HTTPS fetch-pack 通道不稳定（schannel 报错，连续第 3 轮）。push 通道此前正常。
+  请 Muse/Jimmy 知悉：pull 失败不影响本轮判断（ls-remote 已核验），但若后续 Muse 推了新 REVIEW，
+  WorkBuddy 可能因 pull 失败读不到正文；届时请 Jimmy 检查网络或远程可达性。
+- 未部署、未合并 gh-pages、未上线，红线守住。
+
+### 本轮 push 验证结果
+- （push 后回填，见下一条提交）
+
