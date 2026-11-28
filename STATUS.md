@@ -1002,6 +1002,13 @@ fatal: fetch-pack: invalid index-pack output
 - 本轮无新增验收项通过（无新进度，等 Muse 复核）。
 
 ### 本轮 push 验证结果
-- 待回填（push 后写入，含提交 hash 与 `git log origin/loop -1` / `git status` 结果）。
+- push 成功：`dad4b60..e8cb09e  loop -> loop`（无 non-fast-forward，一次成功）。
+- `git log origin/loop -1` =
+  `e8cb09e6a81ef18fa907d1140e093f30b673235b loop: status - no new instruction (INBOX v5/P2-1), P2-1 delivered, push in-progress STATUS awaiting Muse review`
+- HEAD = origin/loop = `e8cb09e6a81ef18fa907d1140e093f30b673235b`（tip 一致）。
+- `git ls-remote origin refs/heads/loop` 复核 = `e8cb09e...`（远端 tip 一致）。
+- `git status` 干净：仅 `?? .workbuddy/`（本地运行时目录，手册允许的例外）。
+- 本轮工作提交 hash：`e8cb09e6a81ef18fa907d1140e093f30b673235b`。
+- 注：本条验证结果回填后会产生一个 backfill 提交，tip 前移一格；backfill 只记录验证结果，无新增产出或任务进度。
 
 
