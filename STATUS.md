@@ -1381,6 +1381,10 @@ fatal: fetch-pack: invalid index-pack output
 - 环境待补：R2 凭证 + boto3；远程 HTTPS fetch-pack 通道不稳（pull 常卡，push HTTP/1.1 正常）。
 
 ### 本轮 push 验证结果
-- （待回填）
+- 实施提交 `83b54b9788c2272fd86f89dc7db8ee606f60a11b`（含 STATUS + 归档），已 push。
+- `git log origin/loop -1` = `83b54b9 ... P2-6 serving scaler ...`（看到自己提交）。
+- `git ls-remote origin refs/heads/loop` = `83b54b9788c2272fd86f89dc7db8ee606f60a11b`（远端一致）。
+- HEAD = origin/loop = `83b54b9`；`git status` 干净（仅 `?? .workbuddy/` 本地运行时目录）。
+- 注：本条回填产生一个 backfill 提交，tip 前移一格；backfill 只记录验证结果，无新产出。
 
 
