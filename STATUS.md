@@ -49,8 +49,11 @@
 - 浏览器截图留源码工作区 `.mobai-scratch/p27-plan*.png`（不同步进 loop）。
 
 ### 本轮 push 验证结果
-- 提交 hash：待本轮 push 后回填（backfill 提交）。
-- `git log origin/loop -1` / `ls-remote` / `git status`：待 push 后回填，未验证前不写「已完成」。
+- 实施提交 `56fc387f00fa913a0bce23179acb67695fc53d08`（含 STATUS + P2-7 归档），已 push。
+- `git log origin/loop -1` = `56fc387 P2-7 weekly plan + aisle-sorted shopping list ...`（看到自己提交）。
+- `git ls-remote origin refs/heads/loop` = `56fc387f00fa913a0bce23179acb67695fc53d08`（远端一致）。
+- HEAD = origin/loop = `56fc387`；`git status` 干净（仅 `?? .workbuddy/` 本地运行时目录）。
+- 注：本条回填产生一个 backfill 提交，tip 前移一格；backfill 只记录验证结果，无新产出。
 
 ## 当前状态（更新于 2026-11-28 17:41 定时任务·P2-3 实施轮）
 
