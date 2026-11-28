@@ -1183,7 +1183,13 @@ fatal: fetch-pack: invalid index-pack output
   `.mobai-scratch/p23-e2e.mjs`。ZIP 无新产出、manifest.md 不变。
 - R2 实测凭证 5 项全 EMPTY、boto3 缺失 → 跳过，未上传，不伪造。
 
-### push 验证结果
-- 待本轮实施提交 push 后回填 hash 与验证结果。
+### push 验证结果（P2-3 实施轮）
+- push 成功：`9836aee..c1dd0a3  loop -> loop`（fast-forward，无 force push）。
+- `git log origin/loop -1` =
+  `c1dd0a3 loop: P2-3 offline implemented - data cache (offline_cache + repository fallback, 4 tests) + service worker enabled per SDK 3.47, 24/24 tests, build+browser firstpaint OK; archive records unverified boundaries (no Supabase / no cold-start)`
+- `git ls-remote origin refs/heads/loop` 复核 = `c1dd0a3...`（远端 tip 一致）。
+- `git status` 干净：仅 `?? .workbuddy/`（本地运行时目录，手册允许的例外）。
+- 本轮实施提交 hash：`c1dd0a36fe7d782f7f13f1bb375621f5cb038be7`。
+- 注：回填产生一个 backfill 提交，tip 前移一格；backfill 仅记录验证结果，无新产出或进度。
 
 
