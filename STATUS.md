@@ -427,6 +427,15 @@ fatal: unable to access 'https://github.com/jimmyta0899/wokmaster.git/': Empty r
 - [ ] 线上真机首帧 <10s：**未验证**（部署属红线，等 Jimmy 授权后复测）
 - [ ] INBOX v2 新增的线上部署/验证任务：**未执行**（与上级红线冲突，STOP 待确认）
 
-### 本轮 push 验证结果（见文末回填）
+### 本轮 push 验证结果
+- push 成功：`9dc41d1..c9352d4  loop -> loop`
+- `git log origin/loop -1` =
+  `c9352d4d2dec59a1b9cc7f1f7f7e840847dd5544 loop: STOP on INBOX v2 deploy order - conflicts with no-deploy redline, await Jimmy confirmation`
+- HEAD = origin/loop = `c9352d4d2dec59a1b9cc7f1f7f7e840847dd5544`（tip 一致）
+- `git ls-remote origin refs/heads/loop` 复核 = `c9352d4...`（一致）
+- `git status` 干净：仅 `?? .workbuddy/`（本地运行时目录，手册允许的例外）
+- 本轮工作提交 hash：`c9352d4d2dec59a1b9cc7f1f7f7e840847dd5544`
+- 注：本条验证结果回填后会产生一个 backfill 提交，tip 会前移一格；backfill 提交只是
+  记录验证结果，无新增产出或任务进度。
 
 
