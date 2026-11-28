@@ -2,6 +2,52 @@
 
 <!-- 用法：每次干完活（或返工后）更新这里，再 push。Muse 只看最新版本。 -->
 
+## 当前状态（更新于 2026-11-28 次日 00:20 定时任务·P2-10 实施轮）
+
+- 任务：**P2-10（每步媒体覆盖率与数据修复）已实施完成，等 Muse 复核**。本轮处理 **INBOX v13**；
+  REVIEW.md 是 **P2-9 PASS（有条件）**，非打回 → 不消耗返工轮次（仍 1/3）。
+- P2-9 提交 `021cce8` 已推送并获 Muse PASS；本轮按「先量化，再决定」执行 P2-10。
+- 授权：一切 Muse 决定；INBOX v13 明确本轮不部署 → **未部署**。未改 PLAN.md / REVIEW.md，未 force push。
+- 源码工作区 = `E:\data\...\wokmaster_source\web_preview`（已确认，本轮在其内改动）。
+
+### 量化结果（全量分页只读，可复现）
+- 数据源 Supabase PostgREST（anon key 只读）；Management API 两个 token 实测均 401 失效。
+- 脚本 `.mobai-scratch/p210_quantify.py` / `p210_verify.py`，结果 JSON 同目录。
+- published 1217 菜 / 5970 步骤：步骤有图 **90.6%**、有任何媒体 **90.6%**、无媒体 **9.4%**、
+  整菜 0 媒体 **5.42%**。**published `recipe.video_url` 坏链 = 0**（1475 行脏数据已被历史
+  pipeline v121 清掉，P1 审计数字是历史快照）。全库残留 447 条坏链全在 draft/archived（用户不可见）。
+  非空视频链接抽查 **20/20 可打开**。
+
+### 判定与改动
+- 不补媒体（覆盖率已 90.6%）；不做新的数据迁移（published 已干净，写库 token 失效，不伪造）。
+- 真正做的（用户可见）：① 把详情页步骤图/视频判定抽成共用 util `step_media.dart`
+  （两处不再各写一套，审计标准 6 收口）；② 做菜模式此前完全不显示步骤媒体，补上
+  `_stepMediaBlock`：有图正常加载（errorBuilder 静默兜底不破图）、有成品参照图、有视频入口、
+  无媒体（9.4%）给「文字步骤」体面兜底。
+- 改动文件：`lib/core/utils/step_media.dart`（新增）、`lib/pages/cook/cook_page.dart`、`lib/pages/recipe/recipe_detail_page.dart`、
+  `test/step_media_test.dart`（新增，9 项）；归档 `archive/2026-11-28_P2-10-step-media.md`。
+
+### 实测结果
+- 单测 9/9；全量 `flutter test` **100/100 通过**（P2-9 结束 91 + 新增 9）。
+- `flutter analyze` → 10 issues 全为改动前既有，新增文件 0 error/0 warning。
+- `flutter build web --release` 成功（82.5s），产物命中 `Text step` / `Watch step video`，SW 存在。
+- 浏览器冒烟（CDP + headless Chrome）：首帧 **4.7s** <10s，访客 `/recipe/ants-climbing-tree` 未跳登录，
+  0 console error / 0 exception。
+
+### 对照 INBOX v13 验收单
+- [x] 覆盖率有量化数字、修复前后可对比（全量分页，脚本可复现）。
+- [x] 1475 行错误 video_url —— published 现为 0（历史已修），20/20 抽查可打开；
+      残留 447 在 draft/archived、token 401 未动，诚实留白（见归档 §5）。
+- [x] 做菜模式无媒体步骤有兜底无破图、有媒体正常加载（9 单测 + build + 接线）。
+- [x] 不回归 P0（100/100、首帧 4.7s、访客不跳登录、0 console error）。
+- [ ] 写库修 draft/archived 447 条 —— token 401，未做，留待 Muse。
+- [ ] 真机/线上 —— 本轮不部署，留待 Muse 定部署后验证。
+
+### 产出 / R2
+- 归档：`archive/2026-11-28_P2-10-step-media.md`。量化脚本/JSON 在源码工作区 `.mobai-scratch/`（不同步进 loop）。
+- R2：脚本存在但 `R2_*`/`CF_R2_*` 全 EMPTY → 跳过上传，未伪造成功，凭证未回显未落盘；无 ZIP，manifest 无需更新。
+- 本轮 push 验证结果：待 push 后回填。
+
 ## 当前状态（更新于 2026-11-28 23:50 定时任务·P2-9 实施轮）
 
 - 任务：**P2-9（行为学习闭环：打卡/评分回流推荐权重与口味画像）已实施完成，等 Muse 复核**。
