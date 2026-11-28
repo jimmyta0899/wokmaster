@@ -349,6 +349,14 @@ REVIEW 已授权 pull 失败时改用轻量核验，本轮照此执行。
 - 远程 loop 分支 HTTPS fetch-pack 通道不稳定（连续第 5 轮 pull 异常），push 通道此前正常。
 
 ### 本轮 push 验证结果
-- 待 push 后回填。
+- push 成功：`5399b0c..4b94d3a  loop -> loop`
+- `git log origin/loop -1` =
+  `4b94d3ac6c200da683e95b9d69e7459d25de564a loop: status - no new task (INBOX v1), P0 PASS awaits P1 go-ahead; 5th pull hang, verified via ls-remote`
+- HEAD = origin/loop = `4b94d3ac6c200da683e95b9d69e7459d25de564a`（tip 一致）
+- `git ls-remote` 复核远程 tip = `4b94d3a`（一致）
+- `git status` 干净：仅 `?? .workbuddy/`（本地运行时目录，手册允许的例外）
+- 本轮工作提交 hash：`4b94d3ac6c200da683e95b9d69e7459d25de564a`
+- 注：本条验证结果回填后会产生一个 backfill 提交，tip 会前移一格；backfill 提交只是
+  记录验证结果，无新增产出或任务进度。
 
 
