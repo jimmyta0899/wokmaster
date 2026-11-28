@@ -488,4 +488,47 @@ REVIEW 已授权 pull 失败时用轻量核验，本轮照此执行。
 - 注：本条验证结果回填后会产生一个 backfill 提交，tip 会前移一格；backfill 提交只是
   记录验证结果，无新增产出或任务进度。
 
+## 本轮轮询记录（2026-11-28 16:26 定时任务）—— 无新指令，维持 INBOX v2 STOP，等 Jimmy
+
+### 判断
+- `git ls-remote origin refs/heads/loop` = `0ea1cc2fa763ed18f282cf1eeabd4c9ac41e043d`
+  = 本地 HEAD → 远程 loop 分支无新提交。
+- `raw.githubusercontent.com` 读回 INBOX.md 仍是 v2、REVIEW.md 仍是 P0 PASS（有条件）；
+  本地与 raw 的 sha256 差异仅为 CRLF/LF 行尾，正文版本号与结论一致。
+- INBOX v2 部署指令已在 16:14 轮按红线 STOP 并归档
+  （archive/2026-11-28_INBOX-v2-deploy-conflict.md），本轮无新增版本 → 无新任务。
+- REVIEW.md 仍是 P0 PASS（有条件），不是打回 → 无返工轮次消耗。
+- 两样都没变 → 按手册第 5 章只推一条"进行中/维持 STOP"STATUS，不重复干活、不空提交。
+- 权限模式自查：本轮 git 命令均直接执行，未出现等待确认弹窗/挂起 → auto 模式正常。
+
+### 本轮做了什么
+- 无代码改动。源码工作区 `E:\data\2026-10-15-11-35-18\wokmaster_source\web_preview` 存在
+  但未触碰（P0 已过、P1 未授权，本轮无任务需动手）。
+- R2 归档：脚本 `holia_import/upload_to_r2.py` 存在，凭证只从环境变量读取（不回显不落盘）。
+  本环境 `R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET / R2_ENDPOINT`
+  全空且 boto3 未装 → **跳过，未上传**（不伪造成功）。
+- 无新对话 md / ZIP 产出：`archive/` 现有四份 md（含 16:14 轮 INBOX v2 冲突归档）与
+  `manifest.md` 不变，不做空同步。
+- 未部署、未合并 gh-pages、未上线、未进 P1、未改 PLAN/REVIEW、未 force push。红线全守住。
+
+### 卡住的地方 / 报错原文（照抄，未改写）
+`git pull` 本轮挂起约 7 分钟、无任何输出，按手册超时阈值手动终止，未重试：
+```
+（无输出，进程挂起；stdout / stderr 均为空，达到阈值后终止）
+```
+`git ls-remote` 与 raw 通道均正常 → 只 pull 的 fetch-pack 通道不稳，判断不受盲区影响。
+REVIEW 已授权 pull 失败时用轻量核验，本轮照此执行。
+
+### 试过什么
+1. `git pull`（带超时）—— 挂起约 7 分钟无输出，终止（本轮 1 次，不重试）。
+2. `git ls-remote origin refs/heads/loop` —— 成功，确认远程 tip 无变化。
+3. `curl` raw.githubusercontent.com 读 INBOX.md / REVIEW.md —— 成功，确认 v2/PASS 未变。
+
+### 需要什么（承接 16:14 / 16:24 轮，仍待 Jimmy）
+- **INBOX v2 部署指令需 Jimmy 本人直接确认**：该令称"Jimmy 已授权"是 Muse 转述，
+  与上级红线（上线必须 Jimmy 点头）及 Muse 自身 REVIEW（部署要 Jimmy 点头）冲突。
+  Jimmy 可本人直接回复确认，或在 loop 分支写一条明确"Jimmy 授权部署"的 REVIEW/INBOX。
+- R2 凭证与 boto3 需 Jimmy 补齐，届时补传归档。
+- 远程 loop 分支 HTTPS fetch-pack 通道不稳定（连续多轮 pull 异常），push 通道正常。
+
 
